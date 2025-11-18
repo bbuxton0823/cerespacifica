@@ -1,0 +1,8 @@
+{
+  "name": "Ceres Pacifica HQS Inspections",
+  "description": "Voice-enabled Housing Quality Standards inspection tool with Gemini AI integration.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}

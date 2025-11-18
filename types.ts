@@ -1,3 +1,4 @@
+
 export enum InspectionStatus {
   PENDING = 'PENDING',
   PASS = 'PASS',
@@ -16,16 +17,28 @@ export interface InspectionItem {
   photos?: string[]; // Base64 strings of attached photos
 }
 
+export interface RoomLocation {
+  horizontal: 'L' | 'C' | 'R' | '';
+  vertical: 'F' | 'C' | 'R' | '';
+  floor: string;
+}
+
 export interface RoomSection {
   id: string;
   title: string;
   type: 'living_room' | 'kitchen' | 'bathroom' | 'bedroom' | 'secondary' | 'exterior' | 'heating' | 'general';
   items: InspectionItem[];
+  location: RoomLocation;
 }
 
 export interface UnitDetails {
+  phaName: string; // Added PHA Name
   tenantName: string;
+  tenantId: string; // Added T-Code/ID field
   address: string;
+  city: string;
+  state: string;
+  zipCode: string;
   unitType: 'S/F Detached' | 'Duplex/Triplex' | 'Town House' | 'Apartment' | 'Manufactured' | 'SRO' | 'Shared Housing' | 'Other';
   yearBuilt: number;
   bedrooms: number;

@@ -1,3 +1,4 @@
+
 import { InspectionItem, InspectionStatus, RoomSection } from './types';
 
 // Helper to create standard items with HQS guidance
@@ -26,6 +27,7 @@ export const INITIAL_SECTIONS: RoomSection[] = [
     id: 'living_room',
     title: '1. Living Room',
     type: 'living_room',
+    location: { horizontal: '', vertical: '', floor: '' },
     items: [
       createItem('1.1', 'Electricity', STD_ELEC),
       createItem('1.2', 'Electrical Hazards', "Check for overloaded circuits, frayed cords, or missing cover plates."),
@@ -43,6 +45,7 @@ export const INITIAL_SECTIONS: RoomSection[] = [
     id: 'kitchen',
     title: '2. Kitchen',
     type: 'kitchen',
+    location: { horizontal: '', vertical: '', floor: '' },
     items: [
       createItem('2.1', 'Electricity', STD_ELEC),
       createItem('2.2', 'Electrical Hazards', "Check near water sources for GFCI."),
@@ -64,6 +67,7 @@ export const INITIAL_SECTIONS: RoomSection[] = [
     id: 'bathroom_1',
     title: '3. Bathroom 1',
     type: 'bathroom',
+    location: { horizontal: '', vertical: '', floor: '' },
     items: [
       createItem('3.1', 'Electricity', STD_ELEC),
       createItem('3.2', 'Electrical Hazards', "No exposed wires. Outlets near water."),
@@ -83,6 +87,7 @@ export const INITIAL_SECTIONS: RoomSection[] = [
     id: 'secondary_room',
     title: '5. Secondary Room (Optional)',
     type: 'secondary',
+    location: { horizontal: '', vertical: '', floor: '' },
     items: [
       createItem('5.1', 'Security', STD_SEC),
       createItem('5.2', 'Electrical Hazards', STD_ELEC),
@@ -93,6 +98,7 @@ export const INITIAL_SECTIONS: RoomSection[] = [
     id: 'building_ext',
     title: '6. Building Exterior',
     type: 'exterior',
+    location: { horizontal: '', vertical: '', floor: '' },
     items: [
       createItem('6.1', 'Foundation', "Sound and free of hazards."),
       createItem('6.2', 'Stairs/Rails/Porches', "Secure handrails for 4+ steps. No tripping hazards."),
@@ -107,6 +113,7 @@ export const INITIAL_SECTIONS: RoomSection[] = [
     id: 'heating',
     title: '7. Heating & Plumbing',
     type: 'heating',
+    location: { horizontal: '', vertical: '', floor: '' },
     items: [
       createItem('7.1', 'Adequate Heating', "Capable of maintaining healthy temp (usually 68F)."),
       createItem('7.2', 'Safe Heating Equipment', "Properly vented. No unvented fuel-burning heaters."),
@@ -121,6 +128,7 @@ export const INITIAL_SECTIONS: RoomSection[] = [
     id: 'health_safety',
     title: '8. Health & Safety',
     type: 'general',
+    location: { horizontal: '', vertical: '', floor: '' },
     items: [
       createItem('8.1', 'Access to Unit', "Two independent exits from building."),
       createItem('8.2', 'Fire Exits', "Not blocked."),
@@ -142,6 +150,7 @@ export const ROOM_TEMPLATES = {
     id: `bedroom_${num}`,
     title: `4.${num} Bedroom ${num}`,
     type: 'bedroom',
+    location: { horizontal: '', vertical: '', floor: '' },
     items: [
       createItem(`4.${num}.1`, 'Electricity', STD_ELEC),
       createItem(`4.${num}.2`, 'Electrical Hazards', STD_ELEC),
@@ -159,6 +168,7 @@ export const ROOM_TEMPLATES = {
     id: `bathroom_${num}`,
     title: `3.${num} Bathroom ${num}`,
     type: 'bathroom',
+    location: { horizontal: '', vertical: '', floor: '' },
     items: [
       createItem(`3.${num}.1`, 'Electricity', STD_ELEC),
       createItem(`3.${num}.2`, 'Electrical Hazards', "No exposed wires."),

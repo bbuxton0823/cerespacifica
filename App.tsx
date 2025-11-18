@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { INITIAL_SECTIONS, ROOM_TEMPLATES } from './constants';
-import { InspectionStatus, RoomSection, UnitDetails, InspectionItem } from './types';
+import { InspectionStatus, RoomSection, UnitDetails, InspectionItem, RoomLocation } from './types';
 import { processVoiceCommand } from './services/geminiService';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -20,11 +21,13 @@ const CheckIcon = () => <i className="fas fa-check-circle"></i>;
 const FailIcon = () => <i className="fas fa-times-circle text-red-600"></i>;
 const InfoIcon = () => <i className="fas fa-info-circle text-blue-500"></i>;
 const PrintIcon = () => <i className="fas fa-print"></i>;
+const FilePdfIcon = () => <i className="fas fa-file-pdf"></i>;
 const WandIcon = () => <i className="fas fa-wand-magic-sparkles text-yellow-400"></i>;
 const ClockIcon = () => <i className="fas fa-clock"></i>;
 const CameraIcon = () => <i className="fas fa-camera"></i>;
 const TrashIcon = () => <i className="fas fa-trash"></i>;
 const PlusIcon = () => <i className="fas fa-plus-circle"></i>;
+const EraserIcon = () => <i className="fas fa-eraser"></i>;
 
 // --- COMPONENTS ---
 
@@ -36,6 +39,175 @@ const Tooltip = ({ text }: { text: string }) => (
     </div>
   </div>
 );
+
+const LocationSelector = ({ 
+  location, 
+  onChange 
+}: { 
+  location: RoomLocation, 
+  onChange: (loc: RoomLocation) => void 
+}) => {
+  const toggleH = (val: 'L'|'C'|'R') => {
+    onChange({ ...location, horizontal: location.horizontal === val ? '' : val });
+  };
+  const toggleV = (val: 'F'|'C'|'R') => {
+    onChange({ ...location, vertical: location.vertical === val ? '' : val });
+  };
+
+  return (
+    <div className="bg-slate-50 px-4 py-2 border-b border-slate-200 flex flex-wrap gap-4 items-center text-xs sm:text-sm">
+      <div className="flex items-center gap-2">
+        <span className="font-bold text-slate-600">Loc:</span>
+        <div className="flex rounded-md shadow-sm" role="group">
+          {['L', 'C', 'R'].map((l) => (
+            <button
+              key={l}
+              onClick={() => toggleH(l as any)}
+              className={`px-3 py-1 border border-slate-300 first:rounded-l-md last:rounded-r-md ${
+                location.horizontal === l ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+        <span className="text-slate-400 mx-1">/</span>
+        <div className="flex rounded-md shadow-sm" role="group">
+          {['F', 'C', 'R'].map((l) => (
+            <button
+              key={l}
+              onClick={() => toggleV(l as any)}
+              className={`px-3 py-1 border border-slate-300 first:rounded-l-md last:rounded-r-md ${
+                location.vertical === l ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="font-bold text-slate-600">Floor:</span>
+        <input 
+          type="text" 
+          className="w-16 p-1 border border-slate-700 rounded text-center bg-slate-900 text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          placeholder="#"
+          value={location.floor}
+          onChange={(e) => onChange({...location, floor: e.target.value})}
+        />
+      </div>
+    </div>
+  );
+};
+
+const SignaturePad = ({ onEnd }: { onEnd: (base64: string | null) => void }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [hasContent, setHasContent] = useState(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Handle resizing
+    const resize = () => {
+        const parent = canvas.parentElement;
+        if(parent) {
+            canvas.width = parent.clientWidth;
+            canvas.height = parent.clientHeight;
+        }
+    };
+    window.addEventListener('resize', resize);
+    resize();
+
+    return () => window.removeEventListener('resize', resize);
+  }, []);
+
+  const getPos = (e: any) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top
+    };
+  };
+
+  const startDrawing = (e: any) => {
+    e.preventDefault();
+    setIsDrawing(true);
+    setHasContent(true);
+    const { x, y } = getPos(e);
+    const ctx = canvasRef.current?.getContext('2d');
+    if (ctx) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#000';
+    }
+  };
+
+  const draw = (e: any) => {
+    e.preventDefault();
+    if (!isDrawing) return;
+    const { x, y } = getPos(e);
+    const ctx = canvasRef.current?.getContext('2d');
+    if (ctx) {
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
+  };
+
+  const endDrawing = () => {
+    setIsDrawing(false);
+    if (canvasRef.current) {
+      onEnd(canvasRef.current.toDataURL());
+    }
+  };
+
+  const clear = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (canvas && ctx) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      setHasContent(false);
+      onEnd(null);
+    }
+  };
+
+  return (
+    <div className="relative w-full h-32 bg-white border border-slate-300 rounded-lg touch-none">
+      <canvas
+        ref={canvasRef}
+        className="w-full h-full cursor-crosshair"
+        onMouseDown={startDrawing}
+        onMouseMove={draw}
+        onMouseUp={endDrawing}
+        onMouseLeave={endDrawing}
+        onTouchStart={startDrawing}
+        onTouchMove={draw}
+        onTouchEnd={endDrawing}
+      />
+      {hasContent && (
+        <button 
+          onClick={clear}
+          className="absolute top-2 right-2 p-1 bg-slate-200 hover:bg-slate-300 rounded text-slate-600"
+          title="Clear Signature"
+        >
+          <EraserIcon />
+        </button>
+      )}
+      {!hasContent && (
+         <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-slate-300">
+            Sign Here
+         </div>
+      )}
+    </div>
+  );
+};
 
 const VoiceInput = ({ 
   label, 
@@ -111,8 +283,13 @@ const VoiceInput = ({
 export default function App() {
   const [step, setStep] = useState<'setup' | 'inspection' | 'summary'>('setup');
   const [details, setDetails] = useState<UnitDetails>({
+    phaName: '',
     tenantName: '',
+    tenantId: '',
     address: '',
+    city: '',
+    state: '',
+    zipCode: '',
     unitType: 'S/F Detached',
     yearBuilt: 1980,
     bedrooms: 1,
@@ -125,6 +302,7 @@ export default function App() {
   const [listeningTarget, setListeningTarget] = useState<string | null>(null); // ID of item being listened to
   const [generalNotes, setGeneralNotes] = useState('');
   const [generalPhotos, setGeneralPhotos] = useState<string[]>([]);
+  const [signature, setSignature] = useState<string | null>(null);
   
   // Camera ref - Defined once at top level
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -174,6 +352,30 @@ export default function App() {
   const stopSpeechRecognition = () => {
     if (recognitionRef.current) {
       recognitionRef.current.stop();
+    }
+  };
+
+  // --- ZIP CODE LOOKUP ---
+  const handleZipCodeChange = async (zip: string) => {
+    setDetails(prev => ({ ...prev, zipCode: zip }));
+
+    if (zip.length === 5) {
+        try {
+            const response = await fetch(`https://api.zippopotam.us/us/${zip}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.places && data.places.length > 0) {
+                    setDetails(prev => ({
+                        ...prev,
+                        zipCode: zip,
+                        city: data.places[0]['place name'],
+                        state: data.places[0]['state abbreviation']
+                    }));
+                }
+            }
+        } catch (error) {
+            console.error("Failed to fetch zip data", error);
+        }
     }
   };
 
@@ -315,6 +517,13 @@ export default function App() {
     }));
   };
 
+  const updateSection = (sectionId: string, updates: Partial<RoomSection>) => {
+    setSections(prev => prev.map(sec => {
+        if (sec.id !== sectionId) return sec;
+        return { ...sec, ...updates };
+    }));
+  };
+
   const handlePassSection = (sectionId: string) => {
     setSections(prev => prev.map(sec => {
       if (sec.id !== sectionId) return sec;
@@ -361,7 +570,7 @@ export default function App() {
           updateItem(targetId.sectionId, targetId.itemId, {
             comment: result.comment,
             is24Hour: result.is24Hour,
-            status: result.status !== InspectionStatus.PENDING ? result.status : undefined
+            status: result.status !== InspectionStatus.PENDING ? (result.status as string) : undefined
           });
         }
       } else {
@@ -402,457 +611,711 @@ export default function App() {
       updateItem(targetId.sectionId, targetId.itemId, {
         comment: result.comment,
         is24Hour: result.is24Hour,
-        status: result.status !== InspectionStatus.PENDING ? result.status : undefined
+        status: result.status !== InspectionStatus.PENDING ? (result.status as string) : undefined
       });
     }
   };
 
-  // --- PDF GENERATION ---
-  const generatePDF = () => {
+  // --- OFFICIAL HUD FORM REPLICA GENERATOR ---
+  const generateOfficialHUDForm = () => {
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
     
-    // Header
-    doc.setFontSize(18);
-    doc.setTextColor(0, 100, 0);
-    doc.text("Ceres Pacifica HQS Inspections", 105, 15, { align: 'center' });
+    // Combine full address
+    const fullAddress = `${details.address}, ${details.city}, ${details.state} ${details.zipCode}`;
+
+    // --- HEADER ---
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Inspection Checklist", 14, 15);
     
     doc.setFontSize(10);
-    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "normal");
+    doc.text("Housing Choice Voucher Program", 14, 20);
     
-    // Info Table
-    autoTable(doc, {
-      startY: 25,
-      head: [['Tenant', 'Address', 'Owner']],
-      body: [[details.tenantName, details.address, '']],
-      theme: 'grid',
-      styles: { fontSize: 10, cellPadding: 2 }
-    });
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("U.S. Department of Housing", pageWidth / 2, 15, { align: "center" });
+    doc.text("and Urban Development", pageWidth / 2, 20, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.text("Office of Public and Indian Housing", pageWidth / 2, 25, { align: "center" });
 
-    // Details Table
+    doc.setFontSize(8);
+    doc.text("OMB Approval No. 2577-0169", pageWidth - 14, 15, { align: "right" });
+    doc.text("(Exp. 04/30/2026)", pageWidth - 14, 20, { align: "right" });
+
+    // --- SECTION A: GENERAL INFORMATION ---
+    let y = 35;
+    doc.setFillColor(230, 230, 230);
+    doc.rect(14, y, pageWidth - 28, 6, 'F');
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("A. General Information", 16, y + 4.5);
+    
+    y += 6;
+    // Top Row
     autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 5,
-      head: [['Inspection Type', 'Unit Type', 'Bedrooms', 'Year Built']],
+      startY: y,
+      head: [['Inspected Unit', 'Year Constructed', 'Housing Type', 'PHA']],
       body: [[
-        'Initial / Annual', 
-        details.unitType, 
-        details.bedrooms === 0 ? '0 (Studio)' : details.bedrooms,
-        `${details.yearBuilt} ${details.yearBuilt < 1978 ? '(Lead Regs Apply)' : ''}`
+        fullAddress,
+        details.yearBuilt.toString(), 
+        details.unitType,
+        details.phaName
       ]],
-      theme: 'grid',
-      styles: { fontSize: 10, cellPadding: 2 }
-    });
-
-    let currentY = (doc as any).lastAutoTable.finalY + 10;
-
-    // Sections
-    sections.forEach(section => {
-      // Check page break
-      if (currentY > 250) {
-        doc.addPage();
-        currentY = 20;
+      theme: 'plain',
+      styles: { fontSize: 9, cellPadding: 2, overflow: 'linebreak' },
+      headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold', lineWidth: 0.1 },
+      bodyStyles: { lineWidth: 0.1 },
+      columnStyles: {
+        0: { cellWidth: 70 },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 'auto' },
+        3: { cellWidth: 40 }
       }
+    });
+    
+    y = (doc as any).lastAutoTable.finalY;
 
-      doc.setFontSize(12);
-      doc.setFillColor(220, 252, 231); // Green-100
-      doc.rect(14, currentY, 182, 8, 'F');
-      doc.text(section.title, 16, currentY + 6);
-      currentY += 10;
-
-      const rows = section.items.map(item => [
-        item.label,
-        item.status,
-        // Add 24 Hour Flag to comment if applicable
-        (item.is24Hour ? '[24 HR FAIL] ' : '') + item.comment
-      ]);
-
-      autoTable(doc, {
-        startY: currentY,
-        head: [['Item', 'Status', 'Comments']],
-        body: rows,
+    // Second Row (Tenant/Inspector/T-Code)
+    autoTable(doc, {
+        startY: y,
+        head: [['Tenant Name', 'Tenant ID Number', 'Inspector', 'Date of Inspection']],
+        body: [[details.tenantName, details.tenantId, details.inspectorName || "_________________", details.inspectionDate]],
         theme: 'plain',
         styles: { fontSize: 9, cellPadding: 2 },
-        columnStyles: {
-          0: { cellWidth: 60 },
-          1: { cellWidth: 30 },
-          2: { cellWidth: 'auto' }
-        },
-        didParseCell: (data) => {
-          if (data.section === 'body' && data.column.index === 1) {
-            const status = data.cell.raw as string;
-            if (status === 'FAIL') data.cell.styles.textColor = [200, 0, 0];
-            if (status === 'PASS') data.cell.styles.textColor = [0, 150, 0];
-          }
-        }
-      });
+        headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold', lineWidth: 0.1 },
+        bodyStyles: { lineWidth: 0.1 }
+    });
+    y = (doc as any).lastAutoTable.finalY;
 
-      currentY = (doc as any).lastAutoTable.finalY + 5;
+    // --- SECTION B: SUMMARY DECISION ---
+    y += 5;
+    doc.setFillColor(230, 230, 230);
+    doc.rect(14, y, pageWidth - 28, 6, 'F');
+    doc.text("B. Summary Decision On Unit", 16, y + 4.5);
+    
+    y += 6;
+    const overallStatus = sections.some(s => s.items.some(i => i.status === InspectionStatus.FAIL)) 
+      ? 'FAIL' 
+      : sections.some(s => s.items.some(i => i.status === InspectionStatus.INCONCLUSIVE || i.status === InspectionStatus.PENDING))
+      ? 'INCONCLUSIVE'
+      : 'PASS';
+
+    autoTable(doc, {
+      startY: y,
+      head: [['Decision', 'Number of Bedrooms', 'Number of Sleeping Rooms']],
+      body: [[
+        `[${overallStatus === 'PASS' ? 'X' : ' '}] Pass   [${overallStatus === 'FAIL' ? 'X' : ' '}] Fail   [${overallStatus === 'INCONCLUSIVE' ? 'X' : ' '}] Inconc.`,
+        details.bedrooms.toString(),
+        details.bedrooms.toString() // Simplification for now
+      ]],
+      theme: 'plain',
+      styles: { fontSize: 9, cellPadding: 2 },
+      headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold', lineWidth: 0.1 },
+      bodyStyles: { lineWidth: 0.1 }
+    });
+    y = (doc as any).lastAutoTable.finalY + 5;
+
+    // --- CHECKLIST TABLE ---
+    const tableRows: any[] = [];
+    sections.forEach(section => {
+      // Section Header Row with Location Data
+      let titleText = section.title.toUpperCase();
+      if (section.location.horizontal || section.location.vertical || section.location.floor) {
+          titleText += ` (Loc: ${section.location.horizontal || '-'}/${section.location.vertical || '-'} Fl: ${section.location.floor || '-'})`;
+      }
+
+      tableRows.push([{ 
+        content: titleText, 
+        colSpan: 6, 
+        styles: { fillColor: [220, 220, 220], fontStyle: 'bold' } 
+      }]);
+
+      section.items.forEach(item => {
+        tableRows.push([
+          item.id,
+          item.label,
+          item.status === InspectionStatus.PASS ? 'X' : '',
+          item.status === InspectionStatus.FAIL ? (item.is24Hour ? 'X (24H)' : 'X') : '',
+          item.status === InspectionStatus.INCONCLUSIVE ? 'X' : (item.status === InspectionStatus.NOT_APPLICABLE ? 'N/A' : ''),
+          item.comment || ''
+        ]);
+      });
     });
 
-    // General Notes
-    if (generalNotes) {
-      if (currentY > 240) { doc.addPage(); currentY = 20; }
-      doc.setFontSize(12);
-      doc.text("General Inspection Notes:", 14, currentY);
-      doc.setFontSize(10);
-      doc.text(generalNotes, 14, currentY + 7, { maxWidth: 180 });
-      currentY += 30; // Approx height
+    autoTable(doc, {
+      startY: y,
+      head: [['Item No.', 'Description', 'Yes/Pass', 'No/Fail', 'In/Conc', 'Comment']],
+      body: tableRows,
+      theme: 'grid',
+      styles: { fontSize: 8, cellPadding: 1 },
+      headStyles: { fillColor: [50, 50, 50], textColor: 255, fontStyle: 'bold' },
+      columnStyles: {
+        0: { cellWidth: 15 },
+        1: { cellWidth: 50 },
+        2: { cellWidth: 15, halign: 'center' },
+        3: { cellWidth: 15, halign: 'center' },
+        4: { cellWidth: 15, halign: 'center' },
+        5: { cellWidth: 'auto' }
+      }
+    });
+
+    // Add Signature at bottom
+    if (signature) {
+        doc.addPage();
+        doc.text("Certifications & Signatures", 14, 20);
+        doc.text("Inspector Signature:", 14, 40);
+        doc.addImage(signature, 'PNG', 14, 45, 60, 30);
+        doc.text("Date: " + details.inspectionDate, 80, 60);
     }
 
-    // Signatures
-    if (currentY > 240) { doc.addPage(); currentY = 20; }
-    doc.line(14, currentY + 15, 80, currentY + 15);
-    doc.text("Inspector Signature", 14, currentY + 20);
+    doc.save(`HUD-52580-${details.tenantName || 'Inspection'}.pdf`);
+  };
+
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
     
-    doc.line(110, currentY + 15, 180, currentY + 15);
-    doc.text("Tenant/Owner Signature", 110, currentY + 20);
+    // Combine full address
+    const fullAddress = `${details.address}, ${details.city}, ${details.state} ${details.zipCode}`;
+
+    doc.setFontSize(20);
+    doc.setTextColor(22, 163, 74); // Green header
+    doc.text("Ceres Pacifica HQS Inspections", pageWidth / 2, 20, { align: "center" });
+    
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`PHA: ${details.phaName}`, 20, 30); // PHA Name
+    doc.text(`Tenant: ${details.tenantName}`, 20, 40);
+    doc.text(`Tenant ID: ${details.tenantId}`, 120, 40); // Added to header
+    doc.text(`Address: ${fullAddress}`, 20, 50);
+    doc.text(`Date: ${details.inspectionDate}`, 20, 60);
+    doc.text(`Inspector: ${details.inspectorName}`, 120, 60);
+    doc.text(`Unit Type: ${details.unitType}`, 20, 70);
+    doc.text(`Year Built: ${details.yearBuilt}`, 120, 70);
+
+    let y = 80;
+
+    // Check for general notes
+    if (generalNotes) {
+      doc.setFontSize(14);
+      doc.setTextColor(22, 163, 74);
+      doc.text("General Inspection Notes", 20, y);
+      y += 10;
+      doc.setFontSize(10);
+      doc.setTextColor(0);
+      const splitNotes = doc.splitTextToSize(generalNotes, pageWidth - 40);
+      doc.text(splitNotes, 20, y);
+      y += splitNotes.length * 7 + 10;
+    }
+
+    sections.forEach((section) => {
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
+      }
+      
+      doc.setFontSize(14);
+      doc.setTextColor(255, 255, 255);
+      // Draw header bg
+      doc.setFillColor(22, 163, 74);
+      doc.rect(15, y - 6, pageWidth - 30, 10, 'F');
+      
+      // Title + Location
+      let titleText = section.title;
+      if (section.location.horizontal || section.location.vertical || section.location.floor) {
+          titleText += `   [Loc: ${section.location.horizontal}/${section.location.vertical} Floor: ${section.location.floor}]`;
+      }
+      doc.text(titleText, 20, y);
+      y += 12;
+
+      section.items.forEach(item => {
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+
+        const statusColor = item.status === InspectionStatus.FAIL 
+          ? [220, 38, 38] // Red
+          : item.status === InspectionStatus.PASS 
+          ? [22, 163, 74] // Green
+          : [100, 116, 139]; // Slate
+        
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        doc.text(item.label, 20, y);
+        
+        doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
+        doc.setFont("helvetica", "bold");
+        let statusText: string = item.status;
+        if (item.status === InspectionStatus.FAIL && item.is24Hour) statusText += " (24HR)";
+        doc.text(statusText, 140, y, { align: "right" });
+        
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(0);
+        
+        if (item.comment) {
+          y += 5;
+          doc.setFontSize(9);
+          doc.setTextColor(80, 80, 80);
+          const comment = `Note: ${item.comment}`;
+          const splitComment = doc.splitTextToSize(comment, 150);
+          doc.text(splitComment, 25, y);
+          y += splitComment.length * 4;
+        }
+        
+        y += 8;
+        doc.setDrawColor(200);
+        doc.line(20, y-2, pageWidth-20, y-2);
+      });
+      y += 10;
+    });
 
     // Photo Addendum
-    const allPhotos: {label: string, src: string}[] = [];
+    const allPhotos: {label: string, data: string}[] = [];
+    // Collect item photos
     sections.forEach(s => s.items.forEach(i => {
-      if (i.photos) i.photos.forEach(p => allPhotos.push({label: `${s.title} - ${i.label}`, src: p}));
+      if (i.photos) i.photos.forEach(p => allPhotos.push({ label: `${s.title} - ${i.label}`, data: p }));
     }));
-    generalPhotos.forEach(p => allPhotos.push({label: 'General', src: p}));
+    // Collect general photos
+    generalPhotos.forEach(p => allPhotos.push({ label: "General Evidence", data: p }));
 
     if (allPhotos.length > 0) {
       doc.addPage();
-      doc.setFontSize(14);
-      doc.text("Photo Addendum", 105, 15, { align: 'center' });
+      doc.setFontSize(16);
+      doc.setTextColor(0);
+      doc.text("Photo Addendum", pageWidth/2, 20, { align: "center" });
       
-      let photoY = 25;
-      let photoX = 15;
-      
+      let py = 40;
       allPhotos.forEach((photo, idx) => {
-        if (photoY > 240) {
+        if (py > 200) {
           doc.addPage();
-          photoY = 20;
+          py = 40;
+        }
+        doc.setFontSize(10);
+        doc.text(`Photo ${idx+1}: ${photo.label}`, 20, py - 5);
+        try {
+            doc.addImage(photo.data, 'JPEG', 20, py, 80, 60);
+        } catch (e) {
+            doc.text("[Image Error]", 20, py + 30);
         }
         
-        try {
-            doc.addImage(photo.src, 'JPEG', photoX, photoY, 50, 50);
-            doc.setFontSize(8);
-            doc.text(photo.label, photoX, photoY + 55);
-        } catch (e) {
-            console.error("Error adding image to PDF", e);
-        }
-
-        photoX += 60;
-        if (photoX > 140) {
-          photoX = 15;
-          photoY += 65;
-        }
+        // Layout logic: 2 per row? or 1 per row? Let's do 2 columns if fitting, simple stack for now
+        // Stack logic
+        py += 75;
       });
     }
 
-    doc.save(`HQS_Inspection_${details.address.replace(/\s+/g, '_')}.pdf`);
+    // Signature on Custom Report
+    if (signature) {
+        if (y > 240) doc.addPage();
+        doc.setFontSize(12);
+        doc.setTextColor(0);
+        doc.text("Inspector Signature:", 20, y + 20);
+        doc.addImage(signature, 'PNG', 20, y + 25, 60, 30);
+    }
+
+    doc.save(`HQS_Report_${details.tenantName.replace(/\s/g, '_')}.pdf`);
   };
 
   // --- RENDER ---
 
-  return (
-    <>
-      {/* Global File Input for Camera - Always Available */}
-      {/* Using opacity:0 instead of display:none to ensure capture attribute works on mobile */}
-      <input 
-        type="file" 
-        accept="image/*" 
-        capture="environment" 
-        ref={fileInputRef} 
-        style={{ opacity: 0, position: 'absolute', zIndex: -1, width: 0, height: 0 }}
-        onChange={handlePhotoUpload} 
-      />
+  if (step === 'setup') {
+    return (
+      <div className="min-h-screen bg-slate-900 text-white p-6 flex flex-col items-center justify-center">
+        <div className="w-full max-w-md space-y-6">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-green-500 mb-2">Ceres Pacifica HQS Inspections</h1>
+            <p className="text-slate-400">Voice-Enabled Inspection Assistant</p>
+          </div>
 
-      {step === 'setup' && (
-        <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 text-white">
-          <div className="max-w-md w-full space-y-6">
-            <div className="text-center">
-              <h1 className="text-3xl font-bold text-green-400 mb-2">Ceres Pacifica HQS Inspections</h1>
-              <p className="text-slate-400">New Inspection Setup</p>
+          <div className="bg-slate-800 p-6 rounded-xl shadow-xl space-y-4">
+            <div>
+              <label className="block text-sm text-slate-400 mb-1">Public Housing Authority (PHA)</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={details.phaName}
+                  onChange={e => setDetails({...details, phaName: e.target.value})}
+                  className="flex-1 bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+                  placeholder="e.g. LA County Housing Authority"
+                />
+                <button onClick={() => handleDictation(v => setDetails({...details, phaName: v}))} className="p-3 bg-slate-700 rounded-lg text-white hover:bg-slate-600">
+                  {isListening ? <MicActiveIcon /> : <MicIcon />}
+                </button>
+              </div>
             </div>
-            
-            <div className="bg-slate-800 p-6 rounded-xl shadow-lg space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-300">Tenant Name</label>
-                <div className="flex gap-2 mt-1">
-                  <input 
-                    type="text" 
-                    className="flex-1 p-3 rounded-lg bg-slate-900 border border-slate-700 text-white focus:ring-2 focus:ring-green-500 outline-none"
-                    value={details.tenantName}
-                    onChange={e => setDetails({...details, tenantName: e.target.value})}
-                    placeholder="John Doe"
-                  />
-                  <button 
-                    onClick={() => handleDictation(val => setDetails(prev => ({...prev, tenantName: val})))}
-                    className={`p-3 rounded-lg text-white ${isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-700'}`}
-                  >
-                    <MicIcon />
-                  </button>
-                </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-300">Address</label>
-                <div className="flex gap-2 mt-1">
-                  <input 
-                    type="text" 
-                    className="flex-1 p-3 rounded-lg bg-slate-900 border border-slate-700 text-white focus:ring-2 focus:ring-green-500 outline-none"
-                    value={details.address}
-                    onChange={e => setDetails({...details, address: e.target.value})}
-                    placeholder="123 Main St"
-                  />
-                  <button 
-                    onClick={() => handleDictation(val => setDetails(prev => ({...prev, address: val})))}
-                    className={`p-3 rounded-lg text-white ${isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-700'}`}
-                  >
-                    <MicIcon />
-                  </button>
-                </div>
+            <div>
+              <label className="block text-sm text-slate-400 mb-1">Tenant Name</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={details.tenantName}
+                  onChange={e => setDetails({...details, tenantName: e.target.value})}
+                  className="flex-1 bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+                  placeholder="Jane Doe"
+                />
+                <button onClick={() => handleDictation(v => setDetails({...details, tenantName: v}))} className="p-3 bg-slate-700 rounded-lg text-white hover:bg-slate-600">
+                  {isListening ? <MicActiveIcon /> : <MicIcon />}
+                </button>
               </div>
+            </div>
 
+            <div>
+              <label className="block text-sm text-slate-400 mb-1">Tenant ID / Code</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={details.tenantId}
+                  onChange={e => setDetails({...details, tenantId: e.target.value})}
+                  className="flex-1 bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+                  placeholder="T-12345 or A-987"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm text-slate-400 mb-1">Street Address</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={details.address}
+                  onChange={e => setDetails({...details, address: e.target.value})}
+                  className="flex-1 bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+                  placeholder="123 Main St, Apt 4B"
+                />
+                <button onClick={() => handleDictation(v => setDetails({...details, address: v}))} className="p-3 bg-slate-700 rounded-lg text-white hover:bg-slate-600">
+                  {isListening ? <MicActiveIcon /> : <MicIcon />}
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
               <div>
-                <label className="block text-sm font-medium text-slate-300">Unit Type</label>
+                 <label className="block text-sm text-slate-400 mb-1">Zip Code</label>
+                 <input 
+                   type="text" 
+                   value={details.zipCode}
+                   onChange={e => handleZipCodeChange(e.target.value)}
+                   className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+                   placeholder="90210"
+                   maxLength={5}
+                 />
+              </div>
+              <div>
+                 <label className="block text-sm text-slate-400 mb-1">City</label>
+                 <input 
+                   type="text" 
+                   value={details.city}
+                   onChange={e => setDetails({...details, city: e.target.value})}
+                   className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+                   placeholder="Beverly Hills"
+                 />
+              </div>
+              <div>
+                 <label className="block text-sm text-slate-400 mb-1">State</label>
+                 <input 
+                   type="text" 
+                   value={details.state}
+                   onChange={e => setDetails({...details, state: e.target.value})}
+                   className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+                   placeholder="CA"
+                 />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Bedrooms</label>
                 <select 
-                  value={details.unitType}
-                  onChange={(e) => setDetails({...details, unitType: e.target.value as any})}
-                  className="w-full p-3 mt-1 rounded-lg bg-slate-900 border border-slate-700 text-white focus:ring-2 focus:ring-green-500 outline-none"
+                  value={details.bedrooms}
+                  onChange={e => setDetails({...details, bedrooms: parseInt(e.target.value)})}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
                 >
-                  <option value="S/F Detached">S/F Detached</option>
-                  <option value="Duplex/Triplex">Duplex/Triplex</option>
-                  <option value="Town House">Town House</option>
-                  <option value="Apartment">Apartment</option>
-                  <option value="Manufactured">Manufactured (Mobile Home)</option>
-                  <option value="SRO">SRO</option>
-                  <option value="Shared Housing">Shared Housing</option>
-                  <option value="Other">Other</option>
+                  <option value={0}>0 (Studio)</option>
+                  <option value={1}>1</option>
+                  <option value={2}>2</option>
+                  <option value={3}>3</option>
+                  <option value={4}>4</option>
+                  <option value={5}>5+</option>
                 </select>
               </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300">Year Built</label>
-                  <input 
-                    type="number" 
-                    className="w-full p-3 mt-1 rounded-lg bg-slate-900 border border-slate-700 text-white"
-                    value={details.yearBuilt}
-                    onChange={e => setDetails({...details, yearBuilt: parseInt(e.target.value)})}
-                  />
-                  {details.yearBuilt < 1978 ? (
-                    <span className="text-xs text-amber-400 font-bold">⚠️ Lead Regs Apply</span>
-                  ) : (
-                    <span className="text-xs text-green-400">✅ Lead Exempt</span>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300">Bedrooms</label>
-                  <select 
-                    className="w-full p-3 mt-1 rounded-lg bg-slate-900 border border-slate-700 text-white"
-                    value={details.bedrooms}
-                    onChange={e => setDetails({...details, bedrooms: parseInt(e.target.value)})}
-                  >
-                    <option value={0}>0 (Studio)</option>
-                    {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300">Bathrooms</label>
-                  <select 
-                    className="w-full p-3 mt-1 rounded-lg bg-slate-900 border border-slate-700 text-white"
-                    value={details.bathrooms}
-                    onChange={e => setDetails({...details, bathrooms: parseInt(e.target.value)})}
-                  >
-                    {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
-                  </select>
-                </div>
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Bathrooms</label>
+                <select 
+                  value={details.bathrooms}
+                  onChange={e => setDetails({...details, bathrooms: parseInt(e.target.value)})}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+                >
+                  <option value={1}>1</option>
+                  <option value={2}>2</option>
+                  <option value={3}>3</option>
+                  <option value={4}>4+</option>
+                </select>
               </div>
-
-              <button 
-                onClick={startInspection}
-                className="w-full py-4 bg-green-600 hover:bg-green-500 rounded-lg font-bold text-lg transition-colors shadow-lg shadow-green-900/50"
-              >
-                Start Inspection
-              </button>
             </div>
+
+            <div>
+              <label className="block text-sm text-slate-400 mb-1">Unit Type</label>
+              <select 
+                value={details.unitType}
+                onChange={e => setDetails({...details, unitType: e.target.value as any})}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+              >
+                <option value="S/F Detached">Single Family Detached</option>
+                <option value="Duplex/Triplex">Duplex/Triplex</option>
+                <option value="Town House">Town House</option>
+                <option value="Apartment">Apartment</option>
+                <option value="Manufactured">Manufactured (Mobile Home)</option>
+                <option value="SRO">Single Room Occupancy (SRO)</option>
+                <option value="Shared Housing">Shared Housing</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm text-slate-400 mb-1">Year Built</label>
+              <input 
+                type="number" 
+                value={details.yearBuilt}
+                onChange={e => setDetails({...details, yearBuilt: parseInt(e.target.value)})}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+              />
+              {details.yearBuilt < 1978 ? (
+                <div className="text-xs text-yellow-500 mt-1">⚠️ Pre-1978: Lead Paint Regulations Apply</div>
+              ) : (
+                <div className="text-xs text-green-500 mt-1">✅ Post-1978: Lead Paint Exempt</div>
+              )}
+            </div>
+
+            <button 
+              onClick={startInspection}
+              className="w-full py-4 bg-green-600 hover:bg-green-500 rounded-lg font-bold text-lg transition-colors shadow-lg shadow-green-900/20"
+            >
+              Start Inspection
+            </button>
           </div>
         </div>
-      )}
+      </div>
+    );
+  }
 
-      {step === 'inspection' && (
-        <div className="min-h-screen bg-slate-100 pb-20">
-          
-          {/* Header */}
-          <header className="bg-slate-900 text-white p-4 sticky top-0 z-20 shadow-md flex justify-between items-center">
-             <div>
-               <h2 className="font-bold">{details.address || 'New Inspection'}</h2>
-               <p className="text-xs text-slate-400">{details.unitType} • {details.bedrooms === 0 ? 'Studio' : `${details.bedrooms} Bed`} / {details.bathrooms} Bath</p>
-             </div>
-             <button onClick={() => setStep('summary')} className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500 font-bold text-sm">
-               Finish
-             </button>
-          </header>
+  // --- INSPECTION VIEW ---
+  return (
+    <div className="min-h-screen pb-20 bg-slate-100 text-slate-900">
+      {/* CAMERA INPUT (Hidden) */}
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        ref={fileInputRef}
+        onChange={handlePhotoUpload}
+        className="absolute opacity-0 pointer-events-none"
+      />
 
-          <div className="max-w-3xl mx-auto p-4 space-y-6">
-            {sections.map(section => (
-              <div key={section.id} className="bg-white rounded-xl shadow overflow-hidden">
-                {/* Section Header - UNIFIED GREEN */}
-                <div className="bg-green-600 text-white p-4 flex justify-between items-center">
-                  <h3 className="font-bold text-lg">{section.title}</h3>
+      {/* HEADER */}
+      <header className="bg-slate-900 text-white p-4 sticky top-0 z-10 shadow-md flex justify-between items-center">
+        <h1 className="font-bold text-lg truncate">Ceres HQS: {details.address}</h1>
+        <button 
+          onClick={() => setStep(step === 'inspection' ? 'summary' : 'inspection')}
+          className="bg-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-500"
+        >
+          {step === 'inspection' ? 'Summary' : 'Back to List'}
+        </button>
+      </header>
+
+      <main className="p-4 max-w-3xl mx-auto space-y-6">
+        
+        {step === 'inspection' ? (
+          <>
+            {/* DYNAMIC ROOM CONTROLS */}
+            <div className="flex gap-2 mb-4">
+               <button onClick={addBedroom} className="flex-1 py-2 bg-slate-200 hover:bg-slate-300 rounded text-slate-700 font-semibold text-sm flex items-center justify-center gap-2">
+                 <PlusIcon /> Add Bedroom
+               </button>
+               <button onClick={addBathroom} className="flex-1 py-2 bg-slate-200 hover:bg-slate-300 rounded text-slate-700 font-semibold text-sm flex items-center justify-center gap-2">
+                 <PlusIcon /> Add Bathroom
+               </button>
+            </div>
+
+            {sections.map((section) => (
+              <div key={section.id} className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200">
+                {/* SECTION HEADER - GREEN */}
+                <div className="bg-green-600 text-white px-4 py-3 flex justify-between items-center">
+                  <h2 className="font-bold text-lg">{section.title}</h2>
                 </div>
 
+                {/* LOCATION TOOLBAR */}
+                <LocationSelector 
+                  location={section.location} 
+                  onChange={(loc) => updateSection(section.id, { location: loc })}
+                />
+
                 <div className="divide-y divide-slate-100">
-                  {section.items.map(item => (
+                  {section.items.map((item) => (
                     <div key={item.id} className="p-4 hover:bg-slate-50 transition-colors">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex items-center">
-                           <span className="font-medium text-slate-900">{item.id} {item.label}</span>
-                           <Tooltip text={item.hqsGuidance} />
-                           {item.is24Hour && (
-                             <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded border border-red-200 flex items-center">
-                               <ClockIcon /> <span className="ml-1">24 HR</span>
-                             </span>
-                           )}
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-slate-700">{item.id} {item.label}</span>
+                          <Tooltip text={item.hqsGuidance} />
                         </div>
                         <div className="flex space-x-1">
-                          <button 
-                            onClick={() => updateItem(section.id, item.id, { status: InspectionStatus.PASS, is24Hour: false })}
-                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${item.status === 'PASS' ? 'bg-green-600 text-white scale-110 shadow-lg' : 'bg-slate-200 text-slate-400 hover:bg-green-100'}`}
-                          >
-                            P
-                          </button>
-                          <button 
-                            onClick={() => updateItem(section.id, item.id, { status: InspectionStatus.FAIL })}
-                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${item.status === 'FAIL' ? 'bg-red-600 text-white scale-110 shadow-lg' : 'bg-slate-200 text-slate-400 hover:bg-red-100'}`}
-                          >
-                            F
-                          </button>
-                          
-                          {/* 24-HOUR TOGGLE BUTTON */}
-                          <button 
+                          {/* 24H TOGGLE */}
+                          <button
                             onClick={() => updateItem(section.id, item.id, { is24Hour: !item.is24Hour })}
-                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all font-bold text-[10px] ${item.is24Hour ? 'bg-red-900 text-white scale-110 shadow-lg border-2 border-red-500' : 'bg-slate-200 text-slate-400 hover:bg-red-100'}`}
+                            className={`px-2 py-1 text-xs font-bold rounded border ${item.is24Hour ? 'bg-red-900 text-white border-red-900' : 'bg-slate-100 text-slate-400 border-slate-200'}`}
                             title="Toggle 24-Hour Emergency Fail"
                           >
                             24H
                           </button>
 
-                          <button 
-                            onClick={() => updateItem(section.id, item.id, { status: InspectionStatus.INCONCLUSIVE })}
-                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${item.status === 'INCONCLUSIVE' ? 'bg-amber-500 text-white scale-110' : 'bg-slate-200 text-slate-400 hover:bg-amber-100'}`}
+                          <button
+                            onClick={() => updateItem(section.id, item.id, { status: InspectionStatus.PASS })}
+                            className={`p-2 rounded-lg ${item.status === InspectionStatus.PASS ? 'bg-green-100 text-green-600' : 'text-slate-300 hover:bg-slate-100'}`}
                           >
-                            I
+                            <CheckIcon />
                           </button>
-
-                          <button 
+                          <button
+                            onClick={() => updateItem(section.id, item.id, { status: InspectionStatus.FAIL })}
+                            className={`p-2 rounded-lg ${item.status === InspectionStatus.FAIL ? 'bg-red-100 text-red-600' : 'text-slate-300 hover:bg-slate-100'}`}
+                          >
+                            <FailIcon />
+                          </button>
+                          <button
                             onClick={() => updateItem(section.id, item.id, { status: InspectionStatus.NOT_APPLICABLE })}
-                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all font-bold text-xs ${item.status === 'N/A' ? 'bg-slate-600 text-white scale-110' : 'bg-slate-200 text-slate-400 hover:bg-slate-300'}`}
-                            title="Not Applicable"
+                            className={`px-2 py-1 text-xs font-bold rounded ${item.status === InspectionStatus.NOT_APPLICABLE ? 'bg-slate-600 text-white' : 'bg-slate-100 text-slate-400'}`}
                           >
                             N/A
                           </button>
                         </div>
                       </div>
                       
-                      {/* Enhanced Input Area */}
-                      <VoiceInput 
-                         value={item.comment}
-                         onChange={(val) => updateItem(section.id, item.id, { comment: val })}
-                         onVoiceStart={() => handleVoiceCommand({sectionId: section.id, itemId: item.id, currentLabel: item.label})}
-                         isListening={isListening && listeningTarget === item.id}
-                         onMagicClick={() => handleMagicAnalysis(item.comment, {sectionId: section.id, itemId: item.id, currentLabel: item.label})}
-                         onCameraClick={() => handleCameraClick({sectionId: section.id, itemId: item.id})}
-                         photos={item.photos}
-                      />
+                      {/* VISUAL INDICATOR FOR 24 HR FAIL */}
+                      {item.status === InspectionStatus.FAIL && item.is24Hour && (
+                         <div className="mb-2 inline-flex items-center gap-1 bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold border border-red-200">
+                           <ClockIcon /> 24-HOUR EMERGENCY FAIL
+                         </div>
+                      )}
+
+                      {/* NOTES INPUT */}
+                      {(item.status === InspectionStatus.FAIL || item.status === InspectionStatus.INCONCLUSIVE || item.comment || listeningTarget === item.id) && (
+                        <VoiceInput
+                          value={item.comment}
+                          onChange={(val) => updateItem(section.id, item.id, { comment: val })}
+                          isListening={listeningTarget === item.id && isListening}
+                          onVoiceStart={() => handleVoiceCommand({ sectionId: section.id, itemId: item.id, currentLabel: item.label })}
+                          onMagicClick={() => handleMagicAnalysis(item.comment, { sectionId: section.id, itemId: item.id, currentLabel: item.label })}
+                          onCameraClick={() => handleCameraClick({ sectionId: section.id, itemId: item.id })}
+                          photos={item.photos}
+                        />
+                      )}
                     </div>
                   ))}
                 </div>
 
-                {/* Pass All Footer */}
-                <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
-                  <button 
-                    onClick={() => handlePassSection(section.id)}
-                    className="px-6 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold shadow transition-colors flex items-center"
-                  >
-                    <CheckIcon /><span className="ml-2">Pass All</span>
-                  </button>
+                {/* PASS ALL FOOTER */}
+                <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
+                   <button 
+                     onClick={() => handlePassSection(section.id)}
+                     className="text-green-600 hover:text-green-700 text-sm font-semibold flex items-center gap-1 px-3 py-2 rounded hover:bg-green-50 transition-colors"
+                   >
+                     <CheckIcon /> Pass Remaining Items
+                   </button>
                 </div>
-
               </div>
             ))}
-
-            {/* ADD ROOM BUTTONS */}
-            <div className="flex justify-center gap-4 py-4">
-               <button onClick={addBedroom} className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg flex items-center font-medium">
-                 <PlusIcon /> <span className="ml-2">Add Bedroom</span>
-               </button>
-               <button onClick={addBathroom} className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg flex items-center font-medium">
-                 <PlusIcon /> <span className="ml-2">Add Bathroom</span>
-               </button>
-            </div>
-
-          </div>
-
-          {/* Global Mic Button */}
-          <div className="fixed bottom-6 right-6">
-            <button 
-              onClick={() => handleVoiceCommand()}
-              className={`w-16 h-16 rounded-full shadow-2xl flex items-center justify-center text-2xl transition-all ${isListening && !listeningTarget ? 'bg-red-600 animate-pulse' : 'bg-blue-600 hover:bg-blue-500'} text-white`}
-            >
-               {isListening && !listeningTarget ? <i className="fas fa-stop"></i> : <i className="fas fa-microphone"></i>}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {step === 'summary' && (
-        <div className="min-h-screen bg-slate-100 p-4">
-          <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6 space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-slate-800">Inspection Summary</h2>
-              <p className="text-slate-500">{details.address}</p>
-            </div>
-
+          </>
+        ) : (
+          <div className="bg-white rounded-xl shadow-xl p-6 space-y-6">
+            <h2 className="text-2xl font-bold border-b pb-4">Inspection Summary</h2>
+            
             <div className="grid grid-cols-2 gap-4 text-sm">
-               <div className="p-3 bg-slate-50 rounded">
-                 <span className="block text-slate-400 text-xs">PASSED ITEMS</span>
-                 <span className="text-xl font-bold text-green-600">
-                   {sections.reduce((acc, s) => acc + s.items.filter(i => i.status === 'PASS').length, 0)}
-                 </span>
+               <div>
+                 <span className="block text-slate-500">PHA</span>
+                 <span className="font-medium">{details.phaName}</span>
                </div>
-               <div className="p-3 bg-slate-50 rounded">
-                 <span className="block text-slate-400 text-xs">FAILED ITEMS</span>
-                 <span className="text-xl font-bold text-red-600">
-                   {sections.reduce((acc, s) => acc + s.items.filter(i => i.status === 'FAIL').length, 0)}
-                 </span>
+               <div>
+                 <span className="block text-slate-500">Tenant</span>
+                 <span className="font-medium">{details.tenantName}</span>
+               </div>
+               <div>
+                 <span className="block text-slate-500">Address</span>
+                 <span className="font-medium">{details.address}</span>
                </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Detailed General Inspection Notes</label>
+            {/* FAIL SUMMARY */}
+            <div className="space-y-2">
+              <h3 className="font-bold text-red-600">Failed Items</h3>
+              {sections.flatMap(s => s.items).filter(i => i.status === InspectionStatus.FAIL).length === 0 ? (
+                <p className="text-slate-500 italic">No failed items.</p>
+              ) : (
+                sections.map(section => {
+                  const fails = section.items.filter(i => i.status === InspectionStatus.FAIL);
+                  if (fails.length === 0) return null;
+                  return (
+                    <div key={section.id} className="bg-red-50 p-3 rounded-lg border border-red-100">
+                      <h4 className="font-semibold text-red-800 text-sm mb-2">{section.title}</h4>
+                      <ul className="space-y-1">
+                        {fails.map(item => (
+                          <li key={item.id} className="text-sm text-red-700 flex justify-between">
+                            <span>{item.label} {item.is24Hour && <strong>(24HR)</strong>}</span>
+                            <span className="italic text-slate-600">{item.comment}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* GENERAL NOTES */}
+            <div className="space-y-2">
+              <h3 className="font-bold text-slate-800">Detailed General Inspection Notes</h3>
               <VoiceInput 
                 value={generalNotes}
                 onChange={setGeneralNotes}
-                onVoiceStart={() => handleVoiceCommand()}
-                isListening={isListening && !listeningTarget}
+                isListening={listeningTarget === 'general' && isListening}
+                onVoiceStart={() => handleVoiceCommand()} // General mode
                 onCameraClick={() => handleCameraClick('general')}
                 photos={generalPhotos}
               />
             </div>
 
-            <div className="flex gap-4">
-              <button 
-                onClick={() => setStep('inspection')}
-                className="flex-1 py-3 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50"
-              >
-                Back to Edit
-              </button>
+            {/* SIGNATURE PAD */}
+            <div className="border-t pt-4">
+              <label className="block text-sm font-medium mb-2">Inspector Signature</label>
+              <SignaturePad onEnd={setSignature} />
+            </div>
+
+            <div className="flex flex-col gap-3 pt-4">
               <button 
                 onClick={generatePDF}
-                className="flex-1 py-3 rounded-lg bg-green-600 text-white font-bold hover:bg-green-500 shadow flex items-center justify-center gap-2"
+                className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold flex items-center justify-center gap-2"
               >
-                <PrintIcon /> Generate PDF Report
+                <FilePdfIcon /> Download Report
+              </button>
+              <button 
+                onClick={generateOfficialHUDForm}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold flex items-center justify-center gap-2"
+              >
+                <FilePdfIcon /> Generate Official HUD 52580
               </button>
             </div>
           </div>
-        </div>
-      )}
-    </>
+        )}
+      </main>
+
+      {/* GLOBAL VOICE FAB */}
+      <button
+        onClick={() => handleVoiceCommand()}
+        className={`fixed bottom-6 right-6 p-4 rounded-full shadow-2xl transition-all transform hover:scale-110 z-50 ${isListening ? 'bg-red-500 animate-pulse' : 'bg-blue-600 hover:bg-blue-500'}`}
+      >
+        <i className={`fas fa-microphone text-white text-xl`}></i>
+      </button>
+    </div>
   );
 }

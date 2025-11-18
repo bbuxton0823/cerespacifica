@@ -138,7 +138,7 @@ export const INITIAL_SECTIONS: RoomSection[] = [
 ];
 
 export const ROOM_TEMPLATES = {
-  bedroom: (num: number) => ({
+  bedroom: (num: number): RoomSection => ({
     id: `bedroom_${num}`,
     title: `4.${num} Bedroom ${num}`,
     type: 'bedroom',
@@ -154,8 +154,8 @@ export const ROOM_TEMPLATES = {
       createItem(`4.${num}.9`, 'Smoke Detector', STD_SMOKE),
       createItem(`4.${num}.10`, 'Carbon Monoxide Detector', STD_CO),
     ]
-  } as const), 
-  bathroom: (num: number) => ({
+  }), 
+  bathroom: (num: number): RoomSection => ({
     id: `bathroom_${num}`,
     title: `3.${num} Bathroom ${num}`,
     type: 'bathroom',
@@ -173,5 +173,5 @@ export const ROOM_TEMPLATES = {
       createItem(`3.${num}.11`, 'Ventilation', "Fan or Window."),
       createItem(`3.${num}.12`, 'Lead-Based Paint', STD_LEAD),
     ]
-  } as const)
+  })
 };

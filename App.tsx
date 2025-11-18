@@ -16,7 +16,7 @@ declare global {
 // --- ICONS ---
 const MicIcon = () => <i className="fas fa-microphone"></i>;
 const MicActiveIcon = () => <i className="fas fa-microphone-lines text-red-500 animate-pulse"></i>;
-const CheckIcon = () => <i className="fas fa-check-circle"></i>; // Removed text-green-600 to allow inheritance in button
+const CheckIcon = () => <i className="fas fa-check-circle"></i>;
 const FailIcon = () => <i className="fas fa-times-circle text-red-600"></i>;
 const InfoIcon = () => <i className="fas fa-info-circle text-blue-500"></i>;
 const PrintIcon = () => <i className="fas fa-print"></i>;
@@ -430,7 +430,7 @@ export default function App() {
 
     // Details Table
     autoTable(doc, {
-      startY: doc.lastAutoTable.finalY + 5,
+      startY: (doc as any).lastAutoTable.finalY + 5,
       head: [['Inspection Type', 'Unit Type', 'Bedrooms', 'Year Built']],
       body: [[
         'Initial / Annual', 
@@ -442,7 +442,7 @@ export default function App() {
       styles: { fontSize: 10, cellPadding: 2 }
     });
 
-    let currentY = doc.lastAutoTable.finalY + 10;
+    let currentY = (doc as any).lastAutoTable.finalY + 10;
 
     // Sections
     sections.forEach(section => {
@@ -485,7 +485,7 @@ export default function App() {
         }
       });
 
-      currentY = doc.lastAutoTable.finalY + 5;
+      currentY = (doc as any).lastAutoTable.finalY + 5;
     });
 
     // General Notes
@@ -551,12 +551,13 @@ export default function App() {
   return (
     <>
       {/* Global File Input for Camera - Always Available */}
+      {/* Using opacity:0 instead of display:none to ensure capture attribute works on mobile */}
       <input 
         type="file" 
         accept="image/*" 
         capture="environment" 
         ref={fileInputRef} 
-        className="hidden" 
+        style={{ opacity: 0, position: 'absolute', zIndex: -1, width: 0, height: 0 }}
         onChange={handlePhotoUpload} 
       />
 

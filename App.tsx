@@ -16,7 +16,7 @@ declare global {
 // --- ICONS ---
 const MicIcon = () => <i className="fas fa-microphone"></i>;
 const MicActiveIcon = () => <i className="fas fa-microphone-lines text-red-500 animate-pulse"></i>;
-const CheckIcon = () => <i className="fas fa-check-circle text-green-600"></i>;
+const CheckIcon = () => <i className="fas fa-check-circle"></i>; // Removed text-green-600 to allow inheritance in button
 const FailIcon = () => <i className="fas fa-times-circle text-red-600"></i>;
 const InfoIcon = () => <i className="fas fa-info-circle text-blue-500"></i>;
 const PrintIcon = () => <i className="fas fa-print"></i>;
@@ -315,12 +315,23 @@ export default function App() {
     }));
   };
 
-  const updateSectionStatus = (sectionId: string, status: InspectionStatus) => {
+  const handlePassSection = (sectionId: string) => {
     setSections(prev => prev.map(sec => {
       if (sec.id !== sectionId) return sec;
       return {
         ...sec,
-        items: sec.items.map(item => ({ ...item, status }))
+        items: sec.items.map(item => {
+          // PRESERVE: FAIL, INCONCLUSIVE, NOT_APPLICABLE
+          if (
+            item.status === InspectionStatus.FAIL || 
+            item.status === InspectionStatus.INCONCLUSIVE || 
+            item.status === InspectionStatus.NOT_APPLICABLE
+          ) {
+            return item;
+          }
+          // Otherwise set to PASS
+          return { ...item, status: InspectionStatus.PASS };
+        })
       };
     }));
   };
@@ -683,12 +694,6 @@ export default function App() {
                 {/* Section Header - UNIFIED GREEN */}
                 <div className="bg-green-600 text-white p-4 flex justify-between items-center">
                   <h3 className="font-bold text-lg">{section.title}</h3>
-                  <button 
-                    onClick={() => updateSectionStatus(section.id, InspectionStatus.PASS)}
-                    className="text-xs bg-white text-green-700 px-3 py-1 rounded-full font-bold uppercase tracking-wider"
-                  >
-                    Pass All
-                  </button>
                 </div>
 
                 <div className="divide-y divide-slate-100">
@@ -733,6 +738,14 @@ export default function App() {
                           >
                             I
                           </button>
+
+                          <button 
+                            onClick={() => updateItem(section.id, item.id, { status: InspectionStatus.NOT_APPLICABLE })}
+                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all font-bold text-xs ${item.status === 'N/A' ? 'bg-slate-600 text-white scale-110' : 'bg-slate-200 text-slate-400 hover:bg-slate-300'}`}
+                            title="Not Applicable"
+                          >
+                            N/A
+                          </button>
                         </div>
                       </div>
                       
@@ -749,6 +762,17 @@ export default function App() {
                     </div>
                   ))}
                 </div>
+
+                {/* Pass All Footer */}
+                <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+                  <button 
+                    onClick={() => handlePassSection(section.id)}
+                    className="px-6 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold shadow transition-colors flex items-center"
+                  >
+                    <CheckIcon /><span className="ml-2">Pass All</span>
+                  </button>
+                </div>
+
               </div>
             ))}
 

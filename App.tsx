@@ -624,7 +624,15 @@ export default function App() {
 
   const confirmReset = () => {
     stopSpeechRecognition();
-    setDetails(INITIAL_DETAILS);
+    // Preserve the current PHA Name for the next inspection
+    const currentPha = details.phaName;
+    
+    // Reset details but re-apply the preserved PHA name
+    setDetails({
+      ...INITIAL_DETAILS,
+      phaName: currentPha
+    });
+
     // We use a deep copy of initial sections to ensure clean state
     setSections(JSON.parse(JSON.stringify(INITIAL_SECTIONS)));
     setGeneralNotes('');
@@ -1068,10 +1076,18 @@ export default function App() {
     doc.text("B. Summary Decision On Unit", 16, y + 4.5);
     
     y += 6;
-    const overallStatus = sections.some(s => s.items.some(i => i.status === InspectionStatus.FAIL)) 
+
+    // STRICT LOGIC:
+    // 1. FAIL if ANY fail.
+    // 2. INCONCLUSIVE if NO fail AND at least one Inconclusive.
+    // 3. PASS otherwise (even if some items are Pending - assumed inspector has verified remainder)
+    const hasFail = sections.some(s => s.items.some(i => i.status === InspectionStatus.FAIL));
+    const hasInconclusive = sections.some(s => s.items.some(i => i.status === InspectionStatus.INCONCLUSIVE));
+    
+    const overallStatus = hasFail 
       ? 'FAIL' 
-      : sections.some(s => s.items.some(i => i.status === InspectionStatus.INCONCLUSIVE || i.status === InspectionStatus.PENDING))
-      ? 'INCONCLUSIVE'
+      : hasInconclusive 
+      ? 'INCONCLUSIVE' 
       : 'PASS';
 
     autoTable(doc, {

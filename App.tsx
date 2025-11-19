@@ -41,6 +41,7 @@ const InfoIcon = () => <i className="fas fa-info-circle text-blue-500"></i>;
 const PrintIcon = () => <i className="fas fa-print"></i>;
 const FilePdfIcon = () => <i className="fas fa-file-pdf"></i>;
 const WandIcon = () => <i className="fas fa-wand-magic-sparkles text-yellow-400"></i>;
+const WandSpinIcon = () => <i className="fas fa-wand-magic-sparkles text-yellow-400 animate-spin"></i>;
 const ClockIcon = () => <i className="fas fa-clock"></i>;
 const CameraIcon = () => <i className="fas fa-camera"></i>;
 const TrashIcon = () => <i className="fas fa-trash"></i>;
@@ -529,6 +530,7 @@ const VoiceInput = ({
   onChange, 
   onVoiceStart, 
   isListening,
+  isProcessing,
   onMagicClick,
   onCameraClick,
   photos = []
@@ -538,6 +540,7 @@ const VoiceInput = ({
   onChange: (val: string) => void, 
   onVoiceStart: () => void, 
   isListening: boolean,
+  isProcessing?: boolean,
   onMagicClick?: () => void,
   onCameraClick?: () => void,
   photos?: string[]
@@ -567,7 +570,7 @@ const VoiceInput = ({
             className="p-2 rounded-full bg-slate-700 hover:bg-purple-600 text-white transition-colors"
             title="AI Analyze & Format"
           >
-            <WandIcon />
+            {isProcessing ? <WandSpinIcon /> : <WandIcon />}
           </button>
         )}
         <button
@@ -599,10 +602,13 @@ export default function App() {
   const [details, setDetails] = useState<UnitDetails>(INITIAL_DETAILS);
   const [sections, setSections] = useState<RoomSection[]>(INITIAL_SECTIONS);
   const [isListening, setIsListening] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false); // New state for AI activity
   const [listeningTarget, setListeningTarget] = useState<string | null>(null); // ID of item being listened to
   const [generalNotes, setGeneralNotes] = useState('');
   const [generalPhotos, setGeneralPhotos] = useState<string[]>([]);
   const [signature, setSignature] = useState<string | null>(null);
+  const [secondarySignature, setSecondarySignature] = useState<string | null>(null); // Tenant/Owner Sig
+  const [signerType, setSignerType] = useState<'Tenant' | 'Owner' | 'Landlord Representative'>('Tenant');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showTutorial, setShowTutorial] = useState(true);
   
@@ -624,7 +630,10 @@ export default function App() {
     setGeneralNotes('');
     setGeneralPhotos([]);
     setSignature(null);
+    setSecondarySignature(null);
+    setSignerType('Tenant');
     setIsListening(false);
+    setIsProcessing(false);
     setListeningTarget(null);
     setStep('setup');
     window.scrollTo(0, 0);
@@ -663,7 +672,8 @@ export default function App() {
 
     recognition.onend = () => {
       setIsListening(false);
-      setListeningTarget(null);
+      // Don't clear target immediately if processing needs to happen
+      // setListeningTarget(null); 
       onEnd();
     };
 
@@ -881,38 +891,45 @@ export default function App() {
 
     startSpeechRecognition(async (transcript) => {
       console.log("Heard:", transcript);
+      setIsProcessing(true); // Show spinner
 
-      // If targetId is present, we treat this as a direct command/update for that item
-      if (targetId) {
-        // Pass context to AI: "User said X about Item Y"
-        // We prefix the transcript with the context so the AI knows what to focus on
-        const contextTranscript = `Regarding ${targetId.currentLabel || 'this item'}: ${transcript}`;
-        
-        const result = await processVoiceCommand(contextTranscript, sections);
-        
-        if (result.success) {
-          updateItem(targetId.sectionId, targetId.itemId, {
-            comment: result.comment,
-            is24Hour: result.is24Hour,
-            status: result.status !== InspectionStatus.PENDING ? (result.status as string) : undefined
-          });
+      try {
+        // If targetId is present, we treat this as a direct command/update for that item
+        if (targetId) {
+          // Pass context to AI: "User said X about Item Y"
+          const contextTranscript = `Regarding ${targetId.currentLabel || 'this item'}: ${transcript}`;
+          
+          const result = await processVoiceCommand(contextTranscript, sections);
+          
+          if (result.success) {
+            updateItem(targetId.sectionId, targetId.itemId, {
+              comment: result.comment,
+              is24Hour: result.is24Hour,
+              status: result.status !== InspectionStatus.PENDING ? (result.status as string) : undefined
+            });
+          }
+        } else {
+          // General voice command mode
+          const result = await processVoiceCommand(transcript, sections);
+          if (result.success && result.sectionId && result.itemId) {
+            updateItem(result.sectionId, result.itemId, {
+              status: result.status,
+              comment: result.comment,
+              is24Hour: result.is24Hour
+            });
+          } else if (result.success) {
+            // Fallback to general notes
+            setGeneralNotes(prev => prev + (prev ? '\n' : '') + `[AI Note]: ${result.comment}`);
+          }
         }
-      } else {
-        // General voice command mode
-        const result = await processVoiceCommand(transcript, sections);
-        if (result.success && result.sectionId && result.itemId) {
-          updateItem(result.sectionId, result.itemId, {
-            status: result.status,
-            comment: result.comment,
-            is24Hour: result.is24Hour
-          });
-        } else if (result.success) {
-          // Fallback to general notes
-          setGeneralNotes(prev => prev + (prev ? '\n' : '') + `[AI Note]: ${result.comment}`);
-        }
+      } catch (e) {
+        console.error("AI Processing Error", e);
+      } finally {
+        setIsProcessing(false);
+        setListeningTarget(null);
       }
     }, () => {
-      setListeningTarget(null);
+      if(!isProcessing) setListeningTarget(null);
     });
   };
 
@@ -929,14 +946,22 @@ export default function App() {
 
   const handleMagicAnalysis = async (text: string, targetId: {sectionId: string, itemId: string, currentLabel?: string}) => {
     if (!text.trim()) return;
-    const contextTranscript = `Regarding ${targetId.currentLabel || 'this item'}: ${text}`;
-    const result = await processVoiceCommand(contextTranscript, sections);
-    if (result.success) {
-      updateItem(targetId.sectionId, targetId.itemId, {
-        comment: result.comment,
-        is24Hour: result.is24Hour,
-        status: result.status !== InspectionStatus.PENDING ? (result.status as string) : undefined
-      });
+    setIsProcessing(true);
+    setListeningTarget(targetId.itemId);
+    
+    try {
+      const contextTranscript = `Regarding ${targetId.currentLabel || 'this item'}: ${text}`;
+      const result = await processVoiceCommand(contextTranscript, sections);
+      if (result.success) {
+        updateItem(targetId.sectionId, targetId.itemId, {
+          comment: result.comment,
+          is24Hour: result.is24Hour,
+          status: result.status !== InspectionStatus.PENDING ? (result.status as string) : undefined
+        });
+      }
+    } finally {
+      setIsProcessing(false);
+      setListeningTarget(null);
     }
   };
 
@@ -1108,13 +1133,60 @@ export default function App() {
       }
     });
 
-    // Add Signature at bottom
+    // --- SIGNATURES PAGE ---
+    doc.addPage();
+    doc.setFontSize(14);
+    doc.text("Certifications & Signatures", 14, 20);
+    
+    let sigY = 40;
+    
+    // Inspector
+    doc.setFontSize(10);
+    doc.text("Inspector Signature:", 14, sigY);
     if (signature) {
-        doc.addPage();
-        doc.text("Certifications & Signatures", 14, 20);
-        doc.text("Inspector Signature:", 14, 40);
-        doc.addImage(signature, 'PNG', 14, 45, 60, 30);
-        doc.text("Date: " + details.inspectionDate, 80, 60);
+        doc.addImage(signature, 'PNG', 14, sigY + 5, 60, 30);
+    }
+    doc.text("Date: " + details.inspectionDate, 80, sigY + 20);
+
+    // Secondary (Tenant/Owner)
+    sigY += 50;
+    const signerLabel = signerType === 'Tenant' ? "Tenant Signature:" : "Owner/Agent Signature:";
+    doc.text(signerLabel, 14, sigY);
+    if (secondarySignature) {
+        doc.addImage(secondarySignature, 'PNG', 14, sigY + 5, 60, 30);
+    }
+    doc.text("Date: " + details.inspectionDate, 80, sigY + 20);
+
+
+    // --- PHOTO ADDENDUM ---
+    const allPhotos: {label: string, data: string}[] = [];
+    sections.forEach(s => s.items.forEach(i => {
+      if (i.photos) i.photos.forEach(p => allPhotos.push({ label: `${s.title} - ${i.label}`, data: p }));
+    }));
+    generalPhotos.forEach(p => allPhotos.push({ label: "General Evidence", data: p }));
+
+    if (allPhotos.length > 0) {
+      doc.addPage();
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text("Photo Addendum", pageWidth/2, 20, { align: "center" });
+      
+      let py = 40;
+      allPhotos.forEach((photo, idx) => {
+        if (py > 200) {
+          doc.addPage();
+          py = 40;
+        }
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Photo ${idx+1}: ${photo.label}`, 20, py - 5);
+        try {
+            doc.addImage(photo.data, 'JPEG', 20, py, 80, 60);
+        } catch (e) {
+            doc.text("[Image Error]", 20, py + 30);
+        }
+        py += 75;
+      });
     }
 
     doc.save(`HUD-52580-${details.tenantName || 'Inspection'}.pdf`);
@@ -1248,20 +1320,28 @@ export default function App() {
         } catch (e) {
             doc.text("[Image Error]", 20, py + 30);
         }
-        
-        // Layout logic: 2 per row? or 1 per row? Let's do 2 columns if fitting, simple stack for now
-        // Stack logic
         py += 75;
       });
     }
 
-    // Signature on Custom Report
+    // Signatures on Custom Report
+    if (y > 220) doc.addPage();
+    else y += 20;
+    
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+    
+    // Inspector
+    doc.text("Inspector Signature:", 20, y);
     if (signature) {
-        if (y > 240) doc.addPage();
-        doc.setFontSize(12);
-        doc.setTextColor(0);
-        doc.text("Inspector Signature:", 20, y + 20);
-        doc.addImage(signature, 'PNG', 20, y + 25, 60, 30);
+        doc.addImage(signature, 'PNG', 20, y + 5, 60, 30);
+    }
+    
+    // Secondary
+    const signerLabel = signerType === 'Tenant' ? "Tenant Signature:" : "Owner/Agent Signature:";
+    doc.text(signerLabel, 120, y);
+    if (secondarySignature) {
+        doc.addImage(secondarySignature, 'PNG', 120, y + 5, 60, 30);
     }
 
     doc.save(`HQS_Report_${details.tenantName.replace(/\s/g, '_')}.pdf`);
@@ -1600,6 +1680,7 @@ export default function App() {
                           value={item.comment}
                           onChange={(val) => updateItem(section.id, item.id, { comment: val })}
                           isListening={listeningTarget === item.id && isListening}
+                          isProcessing={listeningTarget === item.id && isProcessing}
                           onVoiceStart={() => handleVoiceCommand({ sectionId: section.id, itemId: item.id, currentLabel: item.label })}
                           onMagicClick={() => handleMagicAnalysis(item.comment, { sectionId: section.id, itemId: item.id, currentLabel: item.label })}
                           onCameraClick={() => handleCameraClick({ sectionId: section.id, itemId: item.id })}
@@ -1674,16 +1755,37 @@ export default function App() {
                 value={generalNotes}
                 onChange={setGeneralNotes}
                 isListening={listeningTarget === 'general' && isListening}
+                isProcessing={listeningTarget === 'general' && isProcessing}
                 onVoiceStart={() => handleVoiceCommand()} // General mode
                 onCameraClick={() => handleCameraClick('general')}
                 photos={generalPhotos}
               />
             </div>
 
-            {/* SIGNATURE PAD */}
+            {/* INSPECTOR SIGNATURE */}
             <div className="border-t pt-4">
               <label className="block text-sm font-medium mb-2">Inspector Signature</label>
               <SignaturePad onEnd={setSignature} />
+            </div>
+
+            {/* SECONDARY SIGNATURE */}
+            <div className="border-t pt-4">
+                <div className="flex justify-between items-end mb-2">
+                    <label className="block text-sm font-medium">Who is signing?</label>
+                    <select 
+                        className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5"
+                        value={signerType}
+                        onChange={(e) => setSignerType(e.target.value as any)}
+                    >
+                        <option value="Tenant">Tenant</option>
+                        <option value="Owner">Owner</option>
+                        <option value="Landlord Representative">Landlord Representative</option>
+                    </select>
+                </div>
+                <label className="block text-sm font-medium text-slate-500 mb-1">
+                    {signerType} Signature
+                </label>
+                <SignaturePad onEnd={setSecondarySignature} />
             </div>
 
             <div className="flex flex-col gap-3 pt-4">
@@ -1716,7 +1818,7 @@ export default function App() {
         onClick={() => handleVoiceCommand()}
         className={`fixed bottom-6 right-6 p-4 rounded-full shadow-2xl transition-all transform hover:scale-110 z-50 ${isListening ? 'bg-red-500 animate-pulse' : 'bg-blue-600 hover:bg-blue-500'}`}
       >
-        <i className={`fas fa-microphone text-white text-xl`}></i>
+        {isProcessing ? <WandSpinIcon /> : <i className={`fas fa-microphone text-white text-xl`}></i>}
       </button>
     </div>
   );

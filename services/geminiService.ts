@@ -19,11 +19,11 @@ export const processVoiceCommand = async (
   status: InspectionStatus | null;
   comment: string | null;
   is24Hour: boolean;
-  responsibility: 'Owner' | 'Tenant' | null;
+  responsibility: 'owner' | 'tenant' | null;
   success: boolean;
 }> => {
   const ai = getAi();
-  if (!ai) return { success: false, sectionId: null, itemId: null, status: null, comment: null, is24Hour: false, responsibility: 'Owner' };
+  if (!ai) return { success: false, sectionId: null, itemId: null, status: null, comment: null, is24Hour: false, responsibility: 'owner' };
 
   // Map sections including item status for context awareness (crucial for 24h fail logic)
   const contextMap = currentSections.map(s => ({
@@ -37,8 +37,8 @@ export const processVoiceCommand = async (
   }));
 
   const prompt = `
-    You are an expert HQS (Housing Quality Standards) Inspection assistant. 
-    The user is speaking an observation or providing a note during a HUD inspection.
+    You are an HQS (Housing Quality Standards) Inspection assistant. 
+    The user is speaking an observation or providing a note.
 
     Current Form Structure & Status:
     ${JSON.stringify(contextMap).substring(0, 15000)} 
@@ -46,15 +46,10 @@ export const processVoiceCommand = async (
     User Input: "${transcript}"
 
     Your Tasks:
-    1. Identify the most relevant Section ID and Item ID based on the input.
+    1. Identify the most relevant Section ID and Item ID.
     2. Determine the status: PASS, FAIL, INCONCLUSIVE, or N/A.
-    3. **CRITICAL: TRANSFORM THE COMMENT INTO STANDARD HQS DEFICIENCY LANGUAGE.**
-       - If the status is FAIL, do NOT just transcribe the user. You must rewrite it into formal HUD deficiency language.
-       - "The window is busted" -> "Severe window deterioration; broken glass/cutting hazard."
-       - "Toilet won't flush" -> "Toilet inoperable; flush mechanism failure."
-       - "No power in the outlet" -> "Inoperable outlet; failure to provide electricity."
-       - "Cover plate missing" -> "Missing or broken cover plate; exposed electrical connections."
-       - "Peeling paint" -> "Deteriorated paint surface; potential lead-based paint hazard."
+    3. **Summarize the input into professional HQS short-form language.** 
+       - Example: "The window glass is broken" -> "Severe window deterioration; broken glass hazard."
     4. **Determine if this is a 24-Hour Fail** based on these STRICT rules:
        - **24-Hour Fails Include:**
          - No electricity (Unit-wide)
@@ -65,9 +60,7 @@ export const processVoiceCommand = async (
          - No working toilet in unit (CRITICAL DISTINCTION: A toilet that is leaking or running is a regular FAIL, but is NOT "broken" for 24-hour purposes. A toilet is only considered "Not Working" if it is INOPERABLE/WILL NOT FLUSH. Logic: If the toilet is inoperable AND no other toilets in the unit are marked PASS, it is a 24-hour fail. If it is just leaking, it is NOT a 24-hour fail).
          - No working Smoke Detector (Check context: If OTHER smoke detectors are PASS, this is NOT 24-hour. If this is the only one, mark as 24-hour).
          - No working CO Detector (Check context: If OTHER CO detectors are PASS, this is NOT 24-hour).
-    5. **Determine Responsibility:**
-       - Default to 'Owner'.
-       - If the user implies tenant negligence (e.g., "Tenant broke the door", "Hole in wall caused by tenant", "Tenant installed non-compliant lock"), set to 'Tenant'.
+    5. **Determine Responsibility:** If the user mentions "tenant damage", "tenant's fault", or similar, set responsibility to 'tenant'. Otherwise, default to 'owner'.
     
     Return JSON only.
   `;
@@ -86,7 +79,7 @@ export const processVoiceCommand = async (
             status: { type: Type.STRING },
             comment: { type: Type.STRING },
             is24Hour: { type: Type.BOOLEAN },
-            responsibility: { type: Type.STRING, enum: ['Owner', 'Tenant'] }
+            responsibility: { type: Type.STRING, enum: ['owner', 'tenant'] }
           }
         }
       }
@@ -101,7 +94,6 @@ export const processVoiceCommand = async (
     if (result.status?.toUpperCase() === 'PASS') statusEnum = InspectionStatus.PASS;
     if (result.status?.toUpperCase() === 'FAIL') statusEnum = InspectionStatus.FAIL;
     if (result.status?.toUpperCase() === 'N/A') statusEnum = InspectionStatus.NOT_APPLICABLE;
-    if (result.status?.toUpperCase() === 'INCONCLUSIVE') statusEnum = InspectionStatus.INCONCLUSIVE;
     
     return {
       success: true,
@@ -110,7 +102,7 @@ export const processVoiceCommand = async (
       status: statusEnum,
       comment: result.comment || transcript,
       is24Hour: result.is24Hour || false,
-      responsibility: (result.responsibility as 'Owner' | 'Tenant') || 'Owner'
+      responsibility: (result.responsibility as 'owner' | 'tenant') || 'owner'
     };
 
   } catch (error) {
@@ -122,7 +114,7 @@ export const processVoiceCommand = async (
       status: null,
       comment: null,
       is24Hour: false,
-      responsibility: 'Owner'
+      responsibility: 'owner'
     };
   }
 };

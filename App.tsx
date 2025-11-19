@@ -36,12 +36,11 @@ const INITIAL_DETAILS: UnitDetails = {
 const MicIcon = () => <i className="fas fa-microphone"></i>;
 const MicActiveIcon = () => <i className="fas fa-microphone-lines text-red-500 animate-pulse"></i>;
 const CheckIcon = () => <i className="fas fa-check-circle"></i>;
-const FailIcon = () => <i className="fas fa-times-circle text-red-600"></i>;
+const FailIcon = () => <i className="fas fa-times-circle"></i>;
 const InfoIcon = () => <i className="fas fa-info-circle text-blue-500"></i>;
 const PrintIcon = () => <i className="fas fa-print"></i>;
 const FilePdfIcon = () => <i className="fas fa-file-pdf"></i>;
 const WandIcon = () => <i className="fas fa-wand-magic-sparkles text-yellow-400"></i>;
-const WandSpinIcon = () => <i className="fas fa-wand-magic-sparkles text-yellow-400 animate-spin"></i>;
 const ClockIcon = () => <i className="fas fa-clock"></i>;
 const CameraIcon = () => <i className="fas fa-camera"></i>;
 const TrashIcon = () => <i className="fas fa-trash"></i>;
@@ -52,7 +51,7 @@ const HelpIcon = () => <i className="fas fa-question-circle"></i>;
 const ArrowRightIcon = () => <i className="fas fa-arrow-right"></i>;
 const ArrowLeftIcon = () => <i className="fas fa-arrow-left"></i>;
 
-// --- HELPER COMPONENTS ---
+// --- COMPONENTS ---
 
 const Tooltip = ({ text }: { text: string }) => (
   <div className="group relative inline-block ml-2">
@@ -111,6 +110,7 @@ const TutorialOverlay = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   const nextSlide = () => setSlide(prev => Math.min(prev + 1, 3));
   const prevSlide = () => setSlide(prev => Math.max(prev - 1, 0));
 
+  // SVG Arrow Helper
   const ArrowAnnotation = ({ className, text }: { className: string, text: string }) => (
     <div className={`absolute flex flex-col items-center ${className} z-20`}>
       <div className="bg-yellow-300 text-slate-900 text-xs font-bold px-2 py-1 rounded shadow-lg mb-1 whitespace-nowrap border border-yellow-400">
@@ -125,19 +125,24 @@ const TutorialOverlay = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   return (
     <div className="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-sm flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        
+        {/* Header */}
         <div className="bg-green-600 p-4 text-white flex justify-between items-center">
           <h2 className="text-xl font-bold"><i className="fas fa-book-open mr-2"></i> Quick Start Guide ({slide + 1}/4)</h2>
           <button onClick={onClose} className="text-white/80 hover:text-white"><i className="fas fa-times text-2xl"></i></button>
         </div>
 
+        {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 bg-slate-50 relative">
-          {/* SLIDE 1: SETUP */}
+          
+          {/* SLIDE 1: SETUP & VOICE */}
           {slide === 0 && (
             <div className="space-y-8 text-center">
               <h3 className="text-2xl font-bold text-slate-800">1. Voice & Setup</h3>
               <p className="text-slate-600 max-w-xl mx-auto">Select your <strong>Inspection Type</strong>, fill details with your voice, and let AI handle the formatting.</p>
               
               <div className="relative max-w-md mx-auto bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg mt-8">
+                 {/* Mock Setup Input */}
                  <label className="block text-left text-xs text-slate-400 mb-1">Tenant Name</label>
                  <div className="flex gap-2">
                     <div className="flex-1 bg-slate-900 border border-slate-600 rounded-lg p-3 text-slate-300 text-sm text-left">Jane Doe...</div>
@@ -145,6 +150,8 @@ const TutorialOverlay = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                        <MicActiveIcon />
                     </button>
                  </div>
+                 
+                 {/* Annotation */}
                  <div className="absolute -right-24 top-8 hidden md:flex flex-row items-center">
                     <svg width="60" height="20" className="rotate-180 mr-2 text-yellow-500"><path d="M0 10 L50 10 M40 0 L50 10 L40 20" stroke="currentColor" strokeWidth="3" fill="none"/></svg>
                     <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm font-bold border border-yellow-300">Tap to Speak</span>
@@ -162,15 +169,27 @@ const TutorialOverlay = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                   <div className="text-xs font-bold text-slate-700">Zip Code</div>
                   <div className="text-[10px] text-slate-500">Auto-fills City/State</div>
                 </div>
+                <div className="bg-white p-3 rounded-lg shadow text-center border">
+                  <div className="text-blue-600 text-2xl mb-1"><i className="fas fa-calendar-alt"></i></div>
+                  <div className="text-xs font-bold text-slate-700">Year Built</div>
+                  <div className="text-[10px] text-slate-500">Alerts for Lead Paint</div>
+                </div>
+                <div className="bg-white p-3 rounded-lg shadow text-center border">
+                  <div className="text-purple-600 text-2xl mb-1"><i className="fas fa-building"></i></div>
+                  <div className="text-xs font-bold text-slate-700">Rooms</div>
+                  <div className="text-[10px] text-slate-500">Generates checklist</div>
+                </div>
               </div>
             </div>
           )}
 
-          {/* SLIDE 2: CHECKLIST */}
+          {/* SLIDE 2: INSPECTION ROW */}
           {slide === 1 && (
             <div className="space-y-6 text-center">
               <h3 className="text-2xl font-bold text-slate-800">2. The Inspection Checklist</h3>
               <p className="text-slate-600">Each item has controls for passing, failing, and adding evidence.</p>
+
+              {/* MOCK UI ROW */}
               <div className="relative max-w-2xl mx-auto bg-white border border-slate-300 rounded-xl p-4 shadow-lg text-left mt-6">
                  <div className="flex justify-between items-start mb-2">
                     <span className="font-medium text-slate-700">1.5 Window Condition</span>
@@ -180,24 +199,45 @@ const TutorialOverlay = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                       <button className="p-2 rounded-lg bg-red-100 text-red-600"><FailIcon /></button>
                     </div>
                  </div>
+                 {/* Annotations */}
                  <ArrowAnnotation className="-top-8 right-40" text="Toggle 24-Hour Emergency" />
                  <ArrowAnnotation className="-top-8 right-4" text="Pass / Fail" />
+
                  <div className="relative mt-2">
-                    <div className="w-full p-2 bg-slate-900 rounded text-white text-sm min-h-[60px]">Broken glass pane...</div>
+                    <div className="w-full p-2 bg-slate-900 rounded text-white text-sm min-h-[60px]">
+                       Broken glass pane...
+                    </div>
                     <div className="absolute bottom-2 right-2 flex space-x-2">
                        <button className="p-1.5 bg-slate-700 rounded text-white"><CameraIcon /></button>
                        <button className="p-1.5 bg-slate-700 rounded text-yellow-400"><WandIcon /></button>
                        <button className="p-1.5 bg-red-500 rounded text-white"><MicIcon /></button>
                     </div>
+                    
+                    {/* Annotations */}
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 flex gap-4">
+                       <div className="flex flex-col items-center">
+                          <svg width="20" height="20" viewBox="0 0 20 20" className="text-slate-400 mb-1"><path d="M10 20 L10 0 L5 5 M10 0 L15 5" stroke="currentColor" fill="none"/></svg>
+                          <span className="text-xs font-bold bg-slate-200 px-2 rounded">Evidence</span>
+                       </div>
+                       <div className="flex flex-col items-center">
+                          <svg width="20" height="20" viewBox="0 0 20 20" className="text-slate-400 mb-1"><path d="M10 20 L10 0 L5 5 M10 0 L15 5" stroke="currentColor" fill="none"/></svg>
+                          <span className="text-xs font-bold bg-yellow-100 px-2 rounded">AI Fix</span>
+                       </div>
+                    </div>
                  </div>
+              </div>
+              <div className="text-sm text-slate-500 bg-blue-50 p-3 rounded-lg inline-block border border-blue-100">
+                 <i className="fas fa-lightbulb text-blue-500 mr-2"></i>
+                 <strong>Tip:</strong> Click the "Magic Wand" <WandIcon /> to have AI rewrite your rough notes into professional HQS language!
               </div>
             </div>
           )}
 
-          {/* SLIDE 3: NAV */}
+          {/* SLIDE 3: NAVIGATION */}
           {slide === 2 && (
             <div className="space-y-8 text-center">
               <h3 className="text-2xl font-bold text-slate-800">3. Navigation & Location</h3>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto items-center">
                  <div className="bg-white p-4 rounded-xl shadow border border-slate-200 relative">
                     <div className="text-left font-bold text-slate-600 mb-2 text-sm">Location Selector (Top of Card)</div>
@@ -205,13 +245,35 @@ const TutorialOverlay = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                        <div className="border rounded px-2 py-1 bg-blue-600 text-white">L</div>
                        <div className="border rounded px-2 py-1">C</div>
                        <div className="border rounded px-2 py-1">R</div>
+                       <span className="mx-1">/</span>
+                       <div className="border rounded px-2 py-1">F</div>
+                       <div className="border rounded px-2 py-1">C</div>
+                       <input className="w-10 bg-slate-900 text-white text-center rounded" value="2" readOnly />
+                    </div>
+                    <div className="mt-4 text-sm text-slate-600">
+                       Identify room position: <strong>Left/Right</strong> and <strong>Front/Rear</strong>.
                     </div>
                  </div>
+
                  <div className="bg-white p-4 rounded-xl shadow border border-slate-200">
                     <button className="w-full py-2 bg-slate-200 text-slate-700 font-bold rounded mb-2 flex items-center justify-center gap-2">
                        <PlusIcon /> Add Bedroom
                     </button>
+                    <div className="text-sm text-slate-600">
+                       Found an extra room? Tap "Add Bedroom" or "Add Bathroom" at the top of the list.
+                    </div>
                  </div>
+              </div>
+
+              <div className="max-w-md mx-auto bg-slate-50 border border-slate-200 p-4 rounded-lg mt-6">
+                 <div className="flex justify-end">
+                    <button className="text-green-600 font-bold text-sm flex items-center gap-1 px-3 py-2 rounded bg-green-50 border border-green-200">
+                       <CheckIcon /> Pass Remaining Items
+                    </button>
+                 </div>
+                 <p className="text-xs text-slate-500 mt-2">
+                    Use this button at the bottom of a card to <strong>Pass</strong> all items you haven't marked as Fail. It won't overwrite your Fails!
+                 </p>
               </div>
             </div>
           )}
@@ -223,70 +285,156 @@ const TutorialOverlay = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                <div className="flex flex-col gap-4 max-w-sm mx-auto">
                   <div className="bg-white p-4 rounded-xl shadow flex items-center gap-4 border-l-4 border-blue-600">
                      <div className="bg-blue-100 p-3 rounded-full text-blue-600"><i className="fas fa-file-contract"></i></div>
-                     <div className="text-left"><div className="font-bold">Official HUD 52580</div></div>
+                     <div className="text-left">
+                        <div className="font-bold">Official HUD 52580</div>
+                        <div className="text-xs text-slate-500">Generates the exact government form.</div>
+                     </div>
                   </div>
+                  
                   <div className="bg-white p-4 rounded-xl shadow flex items-center gap-4 border-l-4 border-green-600">
                      <div className="bg-green-100 p-3 rounded-full text-green-600"><i className="fas fa-file-pdf"></i></div>
-                     <div className="text-left"><div className="font-bold">Custom Report</div></div>
+                     <div className="text-left">
+                        <div className="font-bold">Custom Report</div>
+                        <div className="text-xs text-slate-500">Includes photos and detailed AI notes.</div>
+                     </div>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-xl shadow flex items-center gap-4 border-l-4 border-slate-600">
+                     <div className="bg-slate-100 p-3 rounded-full text-slate-600"><i className="fas fa-redo"></i></div>
+                     <div className="text-left">
+                        <div className="font-bold">Start New Inspection</div>
+                        <div className="text-xs text-slate-500">Clears all data for the next house.</div>
+                     </div>
                   </div>
                </div>
-               <div className="bg-yellow-50 p-4 rounded-lg text-yellow-800 text-sm font-medium border border-yellow-200">
-                 Don't forget to capture <strong>Signatures</strong> (Inspector + Tenant/Owner) before exporting!
+               
+               <div className="bg-yellow-50 p-4 rounded-lg max-w-lg mx-auto text-sm text-yellow-800 border border-yellow-200">
+                  <i className="fas fa-star mr-2"></i>
+                  <strong>Pro Tip:</strong> Don't forget to sign the digital signature pad on the Summary screen before generating reports!
                </div>
-               <button onClick={onClose} className="w-full max-w-xs mx-auto py-3 bg-green-600 text-white rounded-xl font-bold shadow-lg text-lg hover:bg-green-700 transform hover:scale-105 transition-all">
-                 Get Started
-               </button>
              </div>
           )}
+
         </div>
-        
-        {/* Footer Controls */}
+
+        {/* Footer Nav */}
         <div className="p-4 bg-slate-100 border-t border-slate-200 flex justify-between items-center">
-          <button onClick={prevSlide} disabled={slide === 0} className="text-slate-500 disabled:opacity-30 hover:text-slate-800 font-medium flex items-center gap-2 px-3 py-2 rounded hover:bg-slate-200">
-            <ArrowLeftIcon /> Back
-          </button>
-          <div className="flex gap-2">
-            {[0,1,2,3].map(i => (
-              <div key={i} className={`w-2 h-2 rounded-full transition-all ${i === slide ? 'bg-green-600 w-4' : 'bg-slate-300'}`}></div>
-            ))}
-          </div>
-          {slide < 3 ? (
-            <button onClick={nextSlide} className="text-green-600 font-bold flex items-center gap-2 px-3 py-2 rounded hover:bg-green-50">
-              Next <ArrowRightIcon />
-            </button>
-          ) : (
-            <div className="w-20"></div> 
-          )}
+           <button 
+             onClick={prevSlide} 
+             disabled={slide === 0}
+             className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 ${slide === 0 ? 'text-slate-300' : 'text-slate-700 hover:bg-slate-200'}`}
+           >
+             <ArrowLeftIcon /> Previous
+           </button>
+           
+           <div className="flex gap-2">
+              {[0,1,2,3].map(i => (
+                 <div key={i} className={`w-2 h-2 rounded-full ${i === slide ? 'bg-green-600' : 'bg-slate-300'}`}></div>
+              ))}
+           </div>
+
+           {slide < 3 ? (
+             <button 
+               onClick={nextSlide}
+               className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold flex items-center gap-2 shadow"
+             >
+               Next <ArrowRightIcon />
+             </button>
+           ) : (
+             <button 
+               onClick={onClose}
+               className="px-6 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold flex items-center gap-2 shadow animate-pulse"
+             >
+               Get Started <CheckIcon />
+             </button>
+           )}
         </div>
       </div>
     </div>
   );
 };
 
-// --- SIGNATURE PAD COMPONENT ---
-const SignaturePad = ({ 
-  onSave, 
-  label 
+const LocationSelector = ({ 
+  location, 
+  onChange 
 }: { 
-  onSave: (data: string) => void; 
-  label: string;
+  location: RoomLocation, 
+  onChange: (loc: RoomLocation) => void 
 }) => {
+  const toggleH = (val: 'L'|'C'|'R') => {
+    onChange({ ...location, horizontal: location.horizontal === val ? '' : val });
+  };
+  const toggleV = (val: 'F'|'C'|'R') => {
+    onChange({ ...location, vertical: location.vertical === val ? '' : val });
+  };
+
+  return (
+    <div className="bg-slate-50 px-4 py-2 border-b border-slate-200 flex flex-wrap gap-4 items-center text-xs sm:text-sm">
+      <div className="flex items-center gap-2">
+        <span className="font-bold text-slate-600">Loc:</span>
+        <div className="flex rounded-md shadow-sm" role="group">
+          {['L', 'C', 'R'].map((l) => (
+            <button
+              key={l}
+              onClick={() => toggleH(l as any)}
+              className={`px-3 py-1 border border-slate-300 first:rounded-l-md last:rounded-r-md ${
+                location.horizontal === l ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+        <span className="text-slate-400 mx-1">/</span>
+        <div className="flex rounded-md shadow-sm" role="group">
+          {['F', 'C', 'R'].map((l) => (
+            <button
+              key={l}
+              onClick={() => toggleV(l as any)}
+              className={`px-3 py-1 border border-slate-300 first:rounded-l-md last:rounded-r-md ${
+                location.vertical === l ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="font-bold text-slate-600">Floor:</span>
+        <input 
+          type="text" 
+          className="w-16 p-1 border border-slate-700 rounded text-center bg-slate-900 text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          placeholder="#"
+          value={location.floor}
+          onChange={(e) => onChange({...location, floor: e.target.value})}
+        />
+      </div>
+    </div>
+  );
+};
+
+const SignaturePad = ({ onEnd }: { onEnd: (base64: string | null) => void }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [hasSignature, setHasSignature] = useState(false);
+  const [hasContent, setHasContent] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (canvas) {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-        ctx.strokeStyle = '#000';
-      }
-    }
+    if (!canvas) return;
+
+    // Handle resizing
+    const resize = () => {
+        const parent = canvas.parentElement;
+        if(parent) {
+            canvas.width = parent.clientWidth;
+            canvas.height = parent.clientHeight;
+        }
+    };
+    window.addEventListener('resize', resize);
+    resize();
+
+    return () => window.removeEventListener('resize', resize);
   }, []);
 
   const getPos = (e: any) => {
@@ -302,12 +450,18 @@ const SignaturePad = ({
   };
 
   const startDrawing = (e: any) => {
-    e.preventDefault(); // Prevent scrolling on touch
+    e.preventDefault();
     setIsDrawing(true);
+    setHasContent(true);
     const { x, y } = getPos(e);
     const ctx = canvasRef.current?.getContext('2d');
-    ctx?.beginPath();
-    ctx?.moveTo(x, y);
+    if (ctx) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#000';
+    }
   };
 
   const draw = (e: any) => {
@@ -315,15 +469,16 @@ const SignaturePad = ({
     if (!isDrawing) return;
     const { x, y } = getPos(e);
     const ctx = canvasRef.current?.getContext('2d');
-    ctx?.lineTo(x, y);
-    ctx?.stroke();
-    setHasSignature(true);
+    if (ctx) {
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
   };
 
-  const stopDrawing = () => {
+  const endDrawing = () => {
     setIsDrawing(false);
-    if (canvasRef.current && hasSignature) {
-      onSave(canvasRef.current.toDataURL());
+    if (canvasRef.current) {
+      onEnd(canvasRef.current.toDataURL());
     }
   };
 
@@ -332,1161 +487,1274 @@ const SignaturePad = ({
     const ctx = canvas?.getContext('2d');
     if (canvas && ctx) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      setHasSignature(false);
-      onSave('');
+      setHasContent(false);
+      onEnd(null);
     }
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
-      <label className="block text-sm font-bold text-slate-700 mb-2">{label}</label>
-      <div className="relative border-2 border-dashed border-slate-300 rounded-lg bg-slate-50 touch-none h-40">
-        <canvas
-          ref={canvasRef}
-          className="w-full h-full cursor-crosshair rounded-lg"
-          onMouseDown={startDrawing}
-          onMouseMove={draw}
-          onMouseUp={stopDrawing}
-          onMouseLeave={stopDrawing}
-          onTouchStart={startDrawing}
-          onTouchMove={draw}
-          onTouchEnd={stopDrawing}
-        />
-        {!hasSignature && (
-          <div className="absolute inset-0 flex items-center justify-center text-slate-400 pointer-events-none">
+    <div className="relative w-full h-32 bg-white border border-slate-300 rounded-lg touch-none">
+      <canvas
+        ref={canvasRef}
+        className="w-full h-full cursor-crosshair"
+        onMouseDown={startDrawing}
+        onMouseMove={draw}
+        onMouseUp={endDrawing}
+        onMouseLeave={endDrawing}
+        onTouchStart={startDrawing}
+        onTouchMove={draw}
+        onTouchEnd={endDrawing}
+      />
+      {hasContent && (
+        <button 
+          onClick={clear}
+          className="absolute top-2 right-2 p-1 bg-slate-200 hover:bg-slate-300 rounded text-slate-600"
+          title="Clear Signature"
+        >
+          <EraserIcon />
+        </button>
+      )}
+      {!hasContent && (
+         <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-slate-300">
             Sign Here
-          </div>
-        )}
-      </div>
-      <button 
-        onClick={clear}
-        className="mt-2 text-xs text-red-500 hover:text-red-700 font-medium flex items-center gap-1"
-      >
-        <EraserIcon /> Clear Signature
-      </button>
+         </div>
+      )}
     </div>
   );
 };
 
-// --- VOICE INPUT COMPONENT ---
 const VoiceInput = ({ 
+  label, 
   value, 
   onChange, 
-  onAiRequest, 
-  placeholder, 
-  className = "",
-  isProcessing = false
+  onVoiceStart, 
+  isListening,
+  onMagicClick,
+  onCameraClick,
+  photos = []
 }: { 
-  value: string; 
-  onChange: (val: string) => void; 
-  onAiRequest?: (text: string) => void;
-  placeholder?: string;
-  className?: string;
-  isProcessing?: boolean;
-}) => {
-  const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef<any>(null);
-
-  const startListening = () => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert("Speech recognition not supported in this browser.");
-      return;
-    }
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognitionRef.current = new SpeechRecognition();
-    recognitionRef.current.continuous = false;
-    recognitionRef.current.interimResults = false;
-
-    recognitionRef.current.onstart = () => setIsListening(true);
-    recognitionRef.current.onend = () => setIsListening(false);
-    recognitionRef.current.onerror = (event: any) => {
-      console.error("Speech Error", event.error);
-      setIsListening(false);
-    };
-
-    recognitionRef.current.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      if (onAiRequest) {
-        onAiRequest(transcript);
-      } else {
-        onChange(transcript);
-      }
-    };
-
-    recognitionRef.current.start();
-  };
-
-  return (
-    <div className={`relative ${className}`}>
+  label?: string, 
+  value: string, 
+  onChange: (val: string) => void, 
+  onVoiceStart: () => void, 
+  isListening: boolean,
+  onMagicClick?: () => void,
+  onCameraClick?: () => void,
+  photos?: string[]
+}) => (
+  <div className="relative w-full">
+    {label && <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>}
+    <div className="relative">
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full bg-slate-900 text-white border border-slate-700 rounded-lg p-3 pr-24 min-h-[80px] focus:ring-2 focus:ring-green-500 focus:outline-none placeholder-slate-500"
+        className="w-full p-3 pr-24 rounded-lg bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 min-h-[80px]"
+        placeholder="Type or dictate notes..."
       />
       <div className="absolute bottom-2 right-2 flex space-x-2">
-        {onAiRequest && (
+        {onCameraClick && (
           <button
-            onClick={() => onAiRequest(value)}
-            disabled={isProcessing || !value.trim()}
-            className="p-2 rounded-full bg-slate-700 text-yellow-400 hover:bg-slate-600 disabled:opacity-50 transition-colors"
-            title="AI Format & Check"
+            onClick={onCameraClick}
+            className="p-2 rounded-full bg-slate-700 hover:bg-slate-600 text-white transition-colors"
+            title="Add Photo"
           >
-            {isProcessing ? <WandSpinIcon /> : <WandIcon />}
+            <CameraIcon />
+          </button>
+        )}
+        {onMagicClick && (
+          <button
+            onClick={onMagicClick}
+            className="p-2 rounded-full bg-slate-700 hover:bg-purple-600 text-white transition-colors"
+            title="AI Analyze & Format"
+          >
+            <WandIcon />
           </button>
         )}
         <button
-          onClick={startListening}
-          disabled={isListening || isProcessing}
-          className={`p-2 rounded-full transition-all ${
-            isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-slate-700 text-white hover:bg-slate-600'
-          }`}
+          onClick={onVoiceStart}
+          className={`p-2 rounded-full transition-colors ${isListening ? 'bg-red-100' : 'bg-slate-700 hover:bg-slate-600'} text-white`}
           title="Dictate"
         >
-           {isListening ? <MicActiveIcon /> : <MicIcon />}
+          {isListening ? <MicActiveIcon /> : <MicIcon />}
         </button>
       </div>
     </div>
-  );
-};
-
-// --- LOCATION SELECTOR COMPONENT ---
-const LocationSelector = ({ 
-  location, 
-  onChange 
-}: { 
-  location: RoomLocation; 
-  onChange: (loc: RoomLocation) => void; 
-}) => {
-  const toggle = (field: keyof RoomLocation, val: string) => {
-    onChange({ ...location, [field]: location[field as keyof RoomLocation] === val ? '' : val });
-  };
-
-  return (
-    <div className="flex items-center space-x-2 bg-white p-2 rounded-md border border-slate-200 mb-3 shadow-sm overflow-x-auto">
-      <span className="text-xs font-bold text-slate-500 uppercase mr-2">Loc:</span>
-      
-      {/* Horizontal */}
-      <div className="flex rounded-md shadow-sm" role="group">
-        {['L', 'C', 'R'].map((opt) => (
-          <button
-            key={opt}
-            onClick={() => toggle('horizontal', opt)}
-            className={`px-3 py-1 text-xs font-medium border first:rounded-l-md last:rounded-r-md ${
-              location.horizontal === opt 
-                ? 'bg-blue-600 text-white border-blue-600' 
-                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-            }`}
-          >
-            {opt}
-          </button>
+    {photos && photos.length > 0 && (
+      <div className="flex gap-2 mt-2 overflow-x-auto pb-2">
+        {photos.map((photo, idx) => (
+          <div key={idx} className="relative flex-shrink-0">
+            <img src={photo} alt="evidence" className="h-16 w-16 object-cover rounded border border-slate-600" />
+            <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full"></div>
+          </div>
         ))}
       </div>
+    )}
+  </div>
+);
 
-      <div className="h-4 w-px bg-slate-300 mx-2"></div>
-
-      {/* Vertical */}
-      <div className="flex rounded-md shadow-sm" role="group">
-        {['F', 'C', 'R'].map((opt) => (
-          <button
-            key={opt}
-            onClick={() => toggle('vertical', opt)}
-            className={`px-3 py-1 text-xs font-medium border first:rounded-l-md last:rounded-r-md ${
-              location.vertical === opt 
-                ? 'bg-blue-600 text-white border-blue-600' 
-                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-            }`}
-          >
-            {opt}
-          </button>
-        ))}
-      </div>
-
-      <div className="h-4 w-px bg-slate-300 mx-2"></div>
-
-      <div className="flex items-center space-x-1">
-        <span className="text-xs text-slate-500 font-bold">FL:</span>
-        <input 
-          type="text" 
-          value={location.floor}
-          onChange={(e) => onChange({ ...location, floor: e.target.value })}
-          className="w-12 text-xs p-1 bg-slate-900 text-white border border-slate-700 rounded text-center focus:ring-1 focus:ring-blue-500"
-          placeholder="#"
-        />
-      </div>
-    </div>
-  );
-};
-
-// --- MAIN APP COMPONENT ---
+// --- MAIN APP ---
 
 export default function App() {
-  const [view, setView] = useState<'setup' | 'inspection' | 'summary'>('setup');
+  const [step, setStep] = useState<'setup' | 'inspection' | 'summary'>('setup');
   const [details, setDetails] = useState<UnitDetails>(INITIAL_DETAILS);
-  const [sections, setSections] = useState<RoomSection[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [activeAiItem, setActiveAiItem] = useState<string | null>(null);
-  const [inspectorSignature, setInspectorSignature] = useState('');
-  const [secondarySignature, setSecondarySignature] = useState('');
-  const [signerType, setSignerType] = useState<'Tenant' | 'Owner' | 'Landlord Representative' | 'Other'>('Tenant');
+  const [sections, setSections] = useState<RoomSection[]>(INITIAL_SECTIONS);
+  const [isListening, setIsListening] = useState(false);
+  const [listeningTarget, setListeningTarget] = useState<string | null>(null); // ID of item being listened to
   const [generalNotes, setGeneralNotes] = useState('');
+  const [generalPhotos, setGeneralPhotos] = useState<string[]>([]);
+  const [signature, setSignature] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showTutorial, setShowTutorial] = useState(true);
+  
+  // Camera ref - Defined once at top level
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const activePhotoTarget = useRef<{sectionId: string, itemId: string} | 'general' | null>(null);
+  const recognitionRef = useRef<any>(null);
 
-  // --- EFFECTS ---
-  useEffect(() => {
-    // Fetch city/state when zip is 5 chars
-    if (details.zipCode.length === 5) {
-      fetch(`https://api.zippopotam.us/us/${details.zipCode}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.places && data.places[0]) {
-            setDetails(prev => ({
-              ...prev,
-              city: data.places[0]['place name'],
-              state: data.places[0]['state abbreviation']
-            }));
-          }
-        })
-        .catch(err => console.error("Zip lookup failed", err));
-    }
-  }, [details.zipCode]);
-
-  const startInspection = () => {
-    const dynamicSections = [...INITIAL_SECTIONS];
-    
-    // 1. Handle Bedrooms: If 0 (Studio), remove generic bedroom. If >0, add specific count.
-    // Filter out any existing 'bedroom' types from INITIAL just in case
-    let finalSections = dynamicSections.filter(s => s.type !== 'bedroom');
-
-    if (details.bedrooms > 0) {
-      // Insert bedrooms after Living Room (index 1 usually)
-      const bedroomSections = [];
-      for (let i = 1; i <= details.bedrooms; i++) {
-        bedroomSections.push(ROOM_TEMPLATES.bedroom(i));
-      }
-      // Find index of kitchen to insert before, or just append appropriately
-      // Typical order: Living, Kitchen, Bath...
-      // We'll insert after Living Room
-      const livingIndex = finalSections.findIndex(s => s.type === 'living_room');
-      if (livingIndex !== -1) {
-        finalSections.splice(livingIndex + 1, 0, ...bedroomSections);
-      } else {
-        finalSections.push(...bedroomSections);
-      }
-    }
-
-    // 2. Handle Bathrooms
-    const bathroomSections = [];
-    // Remove existing default bathroom if any
-    finalSections = finalSections.filter(s => s.type !== 'bathroom');
-    
-    for (let i = 1; i <= details.bathrooms; i++) {
-      bathroomSections.push(ROOM_TEMPLATES.bathroom(i));
-    }
-    // Insert after kitchen
-    const kitchenIndex = finalSections.findIndex(s => s.type === 'kitchen');
-    if (kitchenIndex !== -1) {
-      finalSections.splice(kitchenIndex + 1, 0, ...bathroomSections);
-    } else {
-      finalSections.push(...bathroomSections);
-    }
-
-    // Re-index check: ensure Secondary is present
-    if (!finalSections.find(s => s.type === 'secondary')) {
-      // Add secondary before Exterior
-      const extIndex = finalSections.findIndex(s => s.type === 'exterior');
-      if (extIndex !== -1) {
-        finalSections.splice(extIndex, 0, INITIAL_SECTIONS.find(s => s.type === 'secondary')!);
-      }
-    }
-
-    setSections(finalSections);
-    setView('inspection');
-  };
-
-  const resetApp = () => {
+  // --- RESET APP ---
+  const requestReset = () => {
     setShowResetConfirm(true);
   };
 
   const confirmReset = () => {
-    const preservedPha = details.phaName; // Keep PHA name
-    const preservedInspector = details.inspectorName; // Keep Inspector name
-
-    setDetails({
-      ...INITIAL_DETAILS,
-      phaName: preservedPha,
-      inspectorName: preservedInspector
-    });
-    setSections([]);
-    setInspectorSignature('');
-    setSecondarySignature('');
+    stopSpeechRecognition();
+    setDetails(INITIAL_DETAILS);
+    // We use a deep copy of initial sections to ensure clean state
+    setSections(JSON.parse(JSON.stringify(INITIAL_SECTIONS)));
     setGeneralNotes('');
-    setView('setup');
+    setGeneralPhotos([]);
+    setSignature(null);
+    setIsListening(false);
+    setListeningTarget(null);
+    setStep('setup');
+    window.scrollTo(0, 0);
     setShowResetConfirm(false);
   };
 
-  // --- ACTIONS ---
-
-  const handleVoiceCommand = async (transcript: string, sectionId?: string, itemId?: string) => {
-    setLoading(true);
-    if (itemId) setActiveAiItem(itemId);
-
-    // If we have explicit item context, focus the AI on that
-    let targetItem = null;
-    if (sectionId && itemId) {
-      const section = sections.find(s => s.id === sectionId);
-      targetItem = section?.items.find(i => i.id === itemId);
+  // --- SPEECH RECOGNITION HELPER ---
+  const startSpeechRecognition = (
+    onResult: (transcript: string) => void, 
+    onEnd: () => void
+  ) => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert("Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.");
+      onEnd();
+      return;
     }
 
-    // Augment transcript if target known
-    const fullQuery = targetItem 
-      ? `Regarding ${targetItem.label}: ${transcript}`
-      : transcript;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
 
-    const result = await processVoiceCommand(fullQuery, sections);
-
-    if (result.success) {
-      // If specific item targeted or identified by AI
-      const targetSId = sectionId || result.sectionId;
-      const targetIId = itemId || result.itemId;
-
-      if (targetSId && targetIId) {
-        setSections(prev => prev.map(sec => {
-          if (sec.id === targetSId) {
-            return {
-              ...sec,
-              items: sec.items.map(item => {
-                if (item.id === targetIId) {
-                  return {
-                    ...item,
-                    status: result.status || item.status,
-                    comment: result.comment || item.comment,
-                    is24Hour: result.is24Hour,
-                    responsibility: result.responsibility || item.responsibility
-                  };
-                }
-                return item;
-              })
-            };
-          }
-          return sec;
-        }));
-      } else if (result.comment) {
-        // Fallback: add to general notes if no item matched
-        setGeneralNotes(prev => prev + "\n" + result.comment);
-      }
-    }
-    setLoading(false);
-    setActiveAiItem(null);
-  };
-
-  const toggleStatus = (sectionId: string, itemId: string, status: InspectionStatus) => {
-    setSections(prev => prev.map(sec => {
-      if (sec.id === sectionId) {
-        return {
-          ...sec,
-          items: sec.items.map(item => {
-            if (item.id === itemId) {
-              return { ...item, status: item.status === status ? InspectionStatus.PENDING : status };
-            }
-            return item;
-          })
-        };
-      }
-      return sec;
-    }));
-  };
-
-  const toggle24Hour = (sectionId: string, itemId: string) => {
-    setSections(prev => prev.map(sec => {
-      if (sec.id === sectionId) {
-        return {
-          ...sec,
-          items: sec.items.map(item => {
-            if (item.id === itemId) {
-              return { ...item, is24Hour: !item.is24Hour };
-            }
-            return item;
-          })
-        };
-      }
-      return sec;
-    }));
-  };
-
-  const setResponsibility = (sectionId: string, itemId: string, resp: 'Owner' | 'Tenant') => {
-    setSections(prev => prev.map(sec => {
-      if (sec.id === sectionId) {
-        return {
-          ...sec,
-          items: sec.items.map(item => {
-            if (item.id === itemId) {
-              return { ...item, responsibility: resp };
-            }
-            return item;
-          })
-        };
-      }
-      return sec;
-    }));
-  };
-
-  const addPhoto = (sectionId: string, itemId: string, file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = reader.result as string;
-      setSections(prev => prev.map(sec => {
-        if (sec.id === sectionId) {
-          return {
-            ...sec,
-            items: sec.items.map(item => {
-              if (item.id === itemId) {
-                return { ...item, photos: [...(item.photos || []), base64] };
-              }
-              return item;
-            })
-          };
-        }
-        return sec;
-      }));
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const addNewRoom = (type: 'bedroom' | 'bathroom') => {
-    const count = sections.filter(s => s.type === type).length + 1;
-    const template = type === 'bedroom' ? ROOM_TEMPLATES.bedroom : ROOM_TEMPLATES.bathroom;
-    const newSection = template(count); // ID conflict might occur if we deleted rooms, simple logic for now
-    // Ensure unique ID
-    newSection.id = `${type}_added_${Date.now()}`;
+    recognition.onstart = () => setIsListening(true);
     
-    // Insert before exterior or secondary
-    const insertIdx = sections.findIndex(s => s.type === 'exterior' || s.type === 'secondary');
-    const newSections = [...sections];
-    if (insertIdx !== -1) {
-      newSections.splice(insertIdx, 0, newSection);
-    } else {
-      newSections.push(newSection);
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      onResult(transcript);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event.error);
+      setIsListening(false);
+      onEnd();
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      setListeningTarget(null);
+      onEnd();
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  const stopSpeechRecognition = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
     }
+  };
+
+  // --- ZIP CODE LOOKUP ---
+  const handleZipCodeChange = async (zip: string) => {
+    setDetails(prev => ({ ...prev, zipCode: zip }));
+
+    if (zip.length === 5) {
+        try {
+            const response = await fetch(`https://api.zippopotam.us/us/${zip}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.places && data.places.length > 0) {
+                    setDetails(prev => ({
+                        ...prev,
+                        zipCode: zip,
+                        city: data.places[0]['place name'],
+                        state: data.places[0]['state abbreviation']
+                    }));
+                }
+            }
+        } catch (error) {
+            console.error("Failed to fetch zip data", error);
+        }
+    }
+  };
+
+  // --- INITIALIZATION LOGIC ---
+  const startInspection = () => {
+    // Deep copy INITIAL_SECTIONS to ensure no reference retention
+    let newSections = JSON.parse(JSON.stringify(INITIAL_SECTIONS));
+
+    // 1. Handle Bedrooms (Logic: Studio = 0 bedrooms)
+    const bedroomTemplates = [];
+    if (details.bedrooms > 0) {
+      for (let i = 1; i <= details.bedrooms; i++) {
+        bedroomTemplates.push(ROOM_TEMPLATES.bedroom(i));
+      }
+    } 
+    // If 0 bedrooms (Studio), we DO NOT add any bedroom sections.
+    // The Living Room serves as the sleeping area.
+
+    // 2. Handle Bathrooms
+    const bathroomTemplates = [];
+    // Start from 2 because Bathroom 1 is in INITIAL_SECTIONS (index 2)
+    for (let i = 2; i <= details.bathrooms; i++) {
+      bathroomTemplates.push(ROOM_TEMPLATES.bathroom(i));
+    }
+
+    // Base Structure in INITIAL_SECTIONS:
+    // 0: Living Room
+    // 1: Kitchen
+    // 2: Bathroom 1
+    // 3: Secondary Room
+    // 4: Building Exterior
+    // 5: Heating
+    // 6: Health & Safety
+
+    const baseStart = newSections.slice(0, 3); // Living, Kitchen, Bath1
+    const baseEnd = newSections.slice(3); // Secondary, Ext, Heating, General
+
+    // Combine: BaseStart + Extra Baths + Bedrooms + BaseEnd
+    const combinedSections = [...baseStart, ...bathroomTemplates, ...bedroomTemplates, ...baseEnd];
+    
+    setSections(combinedSections);
+    setStep('inspection');
+    window.scrollTo(0, 0);
+  };
+
+  // --- ADD ROOM DYNAMICALLY ---
+  const addBedroom = () => {
+    const currentCount = sections.filter(s => s.type === 'bedroom').length;
+    const nextNum = currentCount + 1;
+    const newBedroom = ROOM_TEMPLATES.bedroom(nextNum);
+    
+    // Insert before Secondary Room or Building Exterior
+    const insertIdx = sections.findIndex(s => s.id === 'secondary_room' || s.id === 'building_ext');
+    const newSections = [...sections];
+    
+    if (insertIdx !== -1) {
+      newSections.splice(insertIdx, 0, newBedroom);
+    } else {
+      // Fallback: just before the end (Health & Safety) or at end
+      newSections.splice(newSections.length - 2, 0, newBedroom);
+    }
+
     setSections(newSections);
+    setDetails(prev => ({ ...prev, bedrooms: prev.bedrooms + 1 }));
+  };
+
+  const addBathroom = () => {
+    const currentCount = sections.filter(s => s.type === 'bathroom').length;
+    const nextNum = currentCount + 1;
+    const newBathroom = ROOM_TEMPLATES.bathroom(nextNum);
+
+    // Insert after the last bathroom
+    // Find last index of bathroom
+    let lastBathIdx = -1;
+    for (let i = sections.length - 1; i >= 0; i--) {
+        if (sections[i].type === 'bathroom') {
+            lastBathIdx = i;
+            break;
+        }
+    }
+
+    const newSections = [...sections];
+    if (lastBathIdx !== -1) {
+        newSections.splice(lastBathIdx + 1, 0, newBathroom);
+    } else {
+        // Should not happen as Bath 1 is standard, but insert after kitchen if needed
+        newSections.splice(2, 0, newBathroom);
+    }
+
+    setSections(newSections);
+    setDetails(prev => ({ ...prev, bathrooms: prev.bathrooms + 1 }));
+  };
+
+  // --- PHOTO LOGIC ---
+  const handleCameraClick = (target: {sectionId: string, itemId: string} | 'general') => {
+    activePhotoTarget.current = target;
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && activePhotoTarget.current) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        
+        if (activePhotoTarget.current === 'general') {
+          setGeneralPhotos(prev => [...prev, base64]);
+        } else {
+          const { sectionId, itemId } = activePhotoTarget.current;
+          updateItem(sectionId, itemId, {
+            photos: (prevPhotos: string[]) => [...(prevPhotos || []), base64]
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // --- UPDATE HELPERS ---
+  const updateItem = (sectionId: string, itemId: string, updates: Partial<InspectionItem> | any) => {
+    setSections(prev => prev.map(sec => {
+      if (sec.id !== sectionId) return sec;
+      return {
+        ...sec,
+        items: sec.items.map(item => {
+          if (item.id !== itemId) return item;
+          
+          // Handle function updates for photos
+          const newPhotos = typeof updates.photos === 'function' 
+            ? updates.photos(item.photos)
+            : updates.photos || item.photos;
+
+          return { ...item, ...updates, photos: newPhotos };
+        })
+      };
+    }));
+  };
+
+  const updateSection = (sectionId: string, updates: Partial<RoomSection>) => {
+    setSections(prev => prev.map(sec => {
+        if (sec.id !== sectionId) return sec;
+        return { ...sec, ...updates };
+    }));
   };
 
   const handlePassSection = (sectionId: string) => {
     setSections(prev => prev.map(sec => {
-      if (sec.id === sectionId) {
-        return {
-          ...sec,
-          items: sec.items.map(item => {
-            // Preserve FAIL, N/A, INCONCLUSIVE
-            if (item.status === InspectionStatus.FAIL || 
-                item.status === InspectionStatus.NOT_APPLICABLE || 
-                item.status === InspectionStatus.INCONCLUSIVE) {
-              return item;
-            }
-            // Only change PENDING (or already PASS) to PASS
-            return { ...item, status: InspectionStatus.PASS };
-          })
-        };
-      }
-      return sec;
+      if (sec.id !== sectionId) return sec;
+      return {
+        ...sec,
+        items: sec.items.map(item => {
+          // PRESERVE: FAIL, INCONCLUSIVE, NOT_APPLICABLE
+          if (
+            item.status === InspectionStatus.FAIL || 
+            item.status === InspectionStatus.INCONCLUSIVE || 
+            item.status === InspectionStatus.NOT_APPLICABLE
+          ) {
+            return item;
+          }
+          // Otherwise set to PASS
+          return { ...item, status: InspectionStatus.PASS };
+        })
+      };
     }));
   };
 
-  // --- PDF GENERATORS ---
+  // --- AI & VOICE ---
+  const handleVoiceCommand = (targetId?: {sectionId: string, itemId: string, currentLabel?: string}) => {
+    if (isListening) {
+      stopSpeechRecognition();
+      return;
+    }
 
-  const generateHUD52580 = () => {
+    // Set visual target
+    if (targetId) setListeningTarget(targetId.itemId);
+
+    startSpeechRecognition(async (transcript) => {
+      console.log("Heard:", transcript);
+
+      // If targetId is present, we treat this as a direct command/update for that item
+      if (targetId) {
+        // Pass context to AI: "User said X about Item Y"
+        // We prefix the transcript with the context so the AI knows what to focus on
+        const contextTranscript = `Regarding ${targetId.currentLabel || 'this item'}: ${transcript}`;
+        
+        const result = await processVoiceCommand(contextTranscript, sections);
+        
+        if (result.success) {
+          updateItem(targetId.sectionId, targetId.itemId, {
+            comment: result.comment,
+            is24Hour: result.is24Hour,
+            responsibility: result.responsibility,
+            status: result.status !== InspectionStatus.PENDING ? (result.status as string) : undefined
+          });
+        }
+      } else {
+        // General voice command mode
+        const result = await processVoiceCommand(transcript, sections);
+        if (result.success && result.sectionId && result.itemId) {
+          updateItem(result.sectionId, result.itemId, {
+            status: result.status,
+            comment: result.comment,
+            is24Hour: result.is24Hour,
+            responsibility: result.responsibility
+          });
+        } else if (result.success) {
+          // Fallback to general notes
+          setGeneralNotes(prev => prev + (prev ? '\n' : '') + `[AI Note]: ${result.comment}`);
+        }
+      }
+    }, () => {
+      setListeningTarget(null);
+    });
+  };
+
+  // Handle simple dictation for setup fields (no AI summarization needed)
+  const handleDictation = (fieldSetter: (val: string) => void) => {
+    if (isListening) {
+      stopSpeechRecognition();
+      return;
+    }
+    startSpeechRecognition((transcript) => {
+      fieldSetter(transcript);
+    }, () => {});
+  };
+
+  const handleMagicAnalysis = async (text: string, targetId: {sectionId: string, itemId: string, currentLabel?: string}) => {
+    if (!text.trim()) return;
+    const contextTranscript = `Regarding ${targetId.currentLabel || 'this item'}: ${text}`;
+    const result = await processVoiceCommand(contextTranscript, sections);
+    if (result.success) {
+      updateItem(targetId.sectionId, targetId.itemId, {
+        comment: result.comment,
+        is24Hour: result.is24Hour,
+        responsibility: result.responsibility,
+        status: result.status !== InspectionStatus.PENDING ? (result.status as string) : undefined
+      });
+    }
+  };
+
+  // --- OFFICIAL HUD FORM REPLICA GENERATOR ---
+  const generateOfficialHUDForm = () => {
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
     
-    // Header
+    // Combine full address
+    const fullAddress = `${details.address}, ${details.city}, ${details.state} ${details.zipCode}`;
+
+    // --- HEADER ---
     doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
     doc.text("Inspection Checklist", 14, 15);
+    
     doc.setFontSize(10);
-    doc.text("U.S. Department of Housing and Urban Development", 14, 20);
-    doc.text("Office of Public and Indian Housing", 14, 25);
-    doc.text("OMB Approval No. 2577-0169", 150, 15);
+    doc.setFont("helvetica", "normal");
+    doc.text("Housing Choice Voucher Program", 14, 20);
     
-    // General Info Box
-    const startY = 35;
-    doc.rect(14, startY, 182, 45);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("U.S. Department of Housing", pageWidth / 2, 15, { align: "center" });
+    doc.text("and Urban Development", pageWidth / 2, 20, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.text("Office of Public and Indian Housing", pageWidth / 2, 25, { align: "center" });
+
+    doc.setFontSize(8);
+    doc.text("OMB Approval No. 2577-0169", pageWidth - 14, 15, { align: "right" });
+    doc.text("(Exp. 04/30/2026)", pageWidth - 14, 20, { align: "right" });
+
+    // --- SECTION A: GENERAL INFORMATION ---
+    let y = 35;
+    doc.setFillColor(230, 230, 230);
+    doc.rect(14, y, pageWidth - 28, 6, 'F');
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("A. General Information", 16, y + 4.5);
     
-    doc.setFontSize(9);
-    doc.text(`Name of Family: ${details.tenantName}`, 16, startY + 6);
-    doc.text(`Tenant ID: ${details.tenantId}`, 100, startY + 6);
+    y += 6;
+    // Top Row
+    autoTable(doc, {
+      startY: y,
+      head: [['Inspected Unit', 'Year Constructed', 'Housing Type', 'PHA']],
+      body: [[
+        fullAddress,
+        details.yearBuilt.toString(), 
+        details.unitType,
+        details.phaName
+      ]],
+      theme: 'plain',
+      styles: { fontSize: 9, cellPadding: 2, overflow: 'linebreak' },
+      headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold', lineWidth: 0.1 },
+      bodyStyles: { lineWidth: 0.1 },
+      columnStyles: {
+        0: { cellWidth: 70 },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 'auto' },
+        3: { cellWidth: 40 }
+      }
+    });
     
-    doc.text(`Inspector: ${details.inspectorName}`, 16, startY + 14);
-    doc.text(`PHA: ${details.phaName}`, 100, startY + 14);
+    y = (doc as any).lastAutoTable.finalY;
 
-    doc.text(`Address: ${details.address}, ${details.city}, ${details.state} ${details.zipCode}`, 16, startY + 22);
+    // Second Row (Tenant/Inspector/T-Code)
+    autoTable(doc, {
+        startY: y,
+        head: [['Tenant Name', 'Tenant ID Number', 'Inspector', 'Date of Inspection']],
+        body: [[details.tenantName, details.tenantId, details.inspectorName || "_________________", details.inspectionDate]],
+        theme: 'plain',
+        styles: { fontSize: 9, cellPadding: 2 },
+        headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold', lineWidth: 0.1 },
+        bodyStyles: { lineWidth: 0.1 }
+    });
+    y = (doc as any).lastAutoTable.finalY;
+
+    // Third Row (Type of Inspection)
+    const checkbox = (label: string, checked: boolean) => `[${checked ? 'X' : ' '}] ${label}`;
+    const inspectionTypeString = 
+        checkbox("Initial", details.inspectionType === 'Initial') + "  " +
+        checkbox("Special", details.inspectionType === 'Special') + "  " +
+        checkbox("Reinspection", details.inspectionType === 'Reinspection') + "  " +
+        checkbox("Annual", details.inspectionType === 'Annual');
+
+    autoTable(doc, {
+        startY: y,
+        head: [['Type of Inspection', 'Date of Last Inspection', 'PHA']],
+        body: [[
+            inspectionTypeString,
+            "_________________",
+            details.phaName
+        ]],
+        theme: 'plain',
+        styles: { fontSize: 9, cellPadding: 2 },
+        headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold', lineWidth: 0.1 },
+        bodyStyles: { lineWidth: 0.1 }
+    });
+    y = (doc as any).lastAutoTable.finalY;
+
+    // --- SECTION B: SUMMARY DECISION ---
+    y += 5;
+    doc.setFillColor(230, 230, 230);
+    doc.rect(14, y, pageWidth - 28, 6, 'F');
+    doc.text("B. Summary Decision On Unit", 16, y + 4.5);
     
-    doc.text(`Date of Inspection: ${details.inspectionDate}`, 16, startY + 30);
-    doc.text(`Type: ${details.inspectionType}`, 100, startY + 30);
-    
-    doc.text(`Unit Type: ${details.unitType}`, 16, startY + 38);
-    doc.text(`Year Built: ${details.yearBuilt}`, 100, startY + 38);
+    y += 6;
+    const overallStatus = sections.some(s => s.items.some(i => i.status === InspectionStatus.FAIL)) 
+      ? 'FAIL' 
+      : sections.some(s => s.items.some(i => i.status === InspectionStatus.INCONCLUSIVE || i.status === InspectionStatus.PENDING))
+      ? 'INCONCLUSIVE'
+      : 'PASS';
 
-    // Overall Decision Logic
-    // FAIL if any item is FAIL.
-    // INCONCLUSIVE if NO fails but at least one INCONCLUSIVE.
-    // PASS otherwise.
-    let overallStatus = 'PASS';
-    let hasFail = false;
-    let hasInconclusive = false;
+    autoTable(doc, {
+      startY: y,
+      head: [['Decision', 'Number of Bedrooms', 'Number of Sleeping Rooms']],
+      body: [[
+        `[${overallStatus === 'PASS' ? 'X' : ' '}] Pass   [${overallStatus === 'FAIL' ? 'X' : ' '}] Fail   [${overallStatus === 'INCONCLUSIVE' ? 'X' : ' '}] Inconc.`,
+        details.bedrooms.toString(),
+        details.bedrooms.toString() // Simplification for now
+      ]],
+      theme: 'plain',
+      styles: { fontSize: 9, cellPadding: 2 },
+      headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold', lineWidth: 0.1 },
+      bodyStyles: { lineWidth: 0.1 }
+    });
+    y = (doc as any).lastAutoTable.finalY + 5;
 
-    sections.forEach(s => s.items.forEach(i => {
-      if (i.status === InspectionStatus.FAIL) hasFail = true;
-      if (i.status === InspectionStatus.INCONCLUSIVE) hasInconclusive = true;
-    }));
-
-    if (hasFail) overallStatus = 'FAIL';
-    else if (hasInconclusive) overallStatus = 'INCONCLUSIVE';
-
-    // Summary Box
-    doc.setFillColor(240, 240, 240);
-    doc.rect(14, startY + 50, 182, 15, 'F');
-    doc.text(`Summary Decision: ${overallStatus}`, 16, startY + 60);
-    doc.text(`Bedrooms: ${details.bedrooms}`, 100, startY + 60);
-
-    // Inspection Table
+    // --- CHECKLIST TABLE ---
     const tableRows: any[] = [];
     sections.forEach(section => {
-      // Section Header Row
-      tableRows.push([{ content: section.title, colSpan: 5, styles: { fillColor: [22, 163, 74], textColor: 255, fontStyle: 'bold' } }]);
-      
-      section.items.forEach(item => {
-        // Map Status to columns
-        const isPass = item.status === InspectionStatus.PASS ? 'X' : '';
-        const isFail = item.status === InspectionStatus.FAIL ? 'X' : '';
-        const isInconc = item.status === InspectionStatus.INCONCLUSIVE ? 'X' : '';
-        
-        let comment = item.comment;
-        if (item.is24Hour) comment = `[24 HR FAIL] ${comment}`;
-        if (item.status === InspectionStatus.FAIL && item.responsibility) {
-          comment = `[Resp: ${item.responsibility}] ${comment}`;
-        }
-        if (item.photos && item.photos.length > 0) comment += ` (See Photo Addendum)`;
+      // Section Header Row with Location Data
+      let titleText = section.title.toUpperCase();
+      if (section.location.horizontal || section.location.vertical || section.location.floor) {
+          titleText += ` (Loc: ${section.location.horizontal || '-'}/${section.location.vertical || '-'} Fl: ${section.location.floor || '-'})`;
+      }
 
+      tableRows.push([{ 
+        content: titleText, 
+        colSpan: 6, 
+        styles: { fillColor: [220, 220, 220], fontStyle: 'bold' } 
+      }]);
+
+      section.items.forEach(item => {
+        let comment = item.comment || '';
+        if (item.status === InspectionStatus.FAIL && item.responsibility === 'tenant') {
+            comment = `(Tenant Resp) ${comment}`;
+        }
+        
         tableRows.push([
+          item.id,
           item.label,
-          isPass,
-          isFail,
-          isInconc,
+          item.status === InspectionStatus.PASS ? 'X' : '',
+          item.status === InspectionStatus.FAIL ? (item.is24Hour ? 'X (24H)' : 'X') : '',
+          item.status === InspectionStatus.INCONCLUSIVE ? 'X' : (item.status === InspectionStatus.NOT_APPLICABLE ? 'N/A' : ''),
           comment
         ]);
       });
     });
 
     autoTable(doc, {
-      startY: startY + 70,
-      head: [['Item', 'Pass', 'Fail', 'Inc', 'Comment']],
+      startY: y,
+      head: [['Item No.', 'Description', 'Yes/Pass', 'No/Fail', 'In/Conc', 'Comment']],
       body: tableRows,
       theme: 'grid',
-      headStyles: { fillColor: [50, 50, 50] },
+      styles: { fontSize: 8, cellPadding: 1 },
+      headStyles: { fillColor: [50, 50, 50], textColor: 255, fontStyle: 'bold' },
       columnStyles: {
-        0: { cellWidth: 60 },
-        1: { cellWidth: 15, halign: 'center' },
+        0: { cellWidth: 15 },
+        1: { cellWidth: 50 },
         2: { cellWidth: 15, halign: 'center' },
         3: { cellWidth: 15, halign: 'center' },
-        4: { cellWidth: 'auto' }
+        4: { cellWidth: 15, halign: 'center' },
+        5: { cellWidth: 'auto' }
       }
     });
 
-    // Signatures Page
-    doc.addPage();
-    doc.text("Certifications", 14, 20);
-    
-    if (inspectorSignature) {
-       doc.text("Inspector Signature:", 14, 40);
-       doc.addImage(inspectorSignature, 'PNG', 14, 45, 60, 20);
-       doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 70);
+    // Add Signature at bottom
+    if (signature) {
+        doc.addPage();
+        doc.text("Certifications & Signatures", 14, 20);
+        doc.text("Inspector Signature:", 14, 40);
+        doc.addImage(signature, 'PNG', 14, 45, 60, 30);
+        doc.text("Date: " + details.inspectionDate, 80, 60);
     }
 
-    if (secondarySignature) {
-       doc.text(`${signerType} Signature:`, 100, 40);
-       doc.addImage(secondarySignature, 'PNG', 100, 45, 60, 20);
-       doc.text(`Date: ${new Date().toLocaleDateString()}`, 100, 70);
-    }
-
-    // Photo Addendum
-    let hasPhotos = false;
-    sections.forEach(s => s.items.forEach(i => { if (i.photos?.length) hasPhotos = true; }));
-    
-    if (hasPhotos) {
-      doc.addPage();
-      doc.setFontSize(16);
-      doc.text("Photo Addendum", 14, 15);
-      let yPos = 25;
-      
-      sections.forEach(section => {
-        section.items.forEach(item => {
-          if (item.photos && item.photos.length > 0) {
-            // Check if we need new page
-            if (yPos > 250) {
-              doc.addPage();
-              yPos = 20;
-            }
-            doc.setFontSize(12);
-            doc.text(`${section.title} - ${item.label}`, 14, yPos);
-            yPos += 5;
-            
-            item.photos.forEach(photo => {
-               if (yPos > 220) {
-                 doc.addPage();
-                 yPos = 20;
-               }
-               try {
-                 doc.addImage(photo, 'JPEG', 14, yPos, 80, 60);
-                 yPos += 65;
-               } catch (e) {
-                 console.error("Error adding image to PDF", e);
-               }
-            });
-            yPos += 10;
-          }
-        });
-      });
-    }
-
-    doc.save(`HUD-52580-${details.address.replace(/\s/g, '_')}.pdf`);
+    doc.save(`HUD-52580-${details.tenantName || 'Inspection'}.pdf`);
   };
 
-  const generateCustomPDF = () => {
+  const generatePDF = () => {
     const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.setTextColor(22, 163, 74);
-    doc.text("Ceres Pacifica HQS Inspection Report", 105, 15, { align: 'center' });
+    const pageWidth = doc.internal.pageSize.width;
     
-    // Details
-    doc.setFontSize(10);
-    doc.setTextColor(0);
-    doc.text(`Date: ${details.inspectionDate}`, 14, 25);
-    doc.text(`Inspector: ${details.inspectorName}`, 14, 30);
-    doc.text(`PHA: ${details.phaName}`, 14, 35);
-    doc.text(`Type: ${details.inspectionType}`, 100, 25);
-    doc.text(`Tenant: ${details.tenantName} (ID: ${details.tenantId})`, 14, 45);
-    doc.text(`Address: ${details.address}, ${details.city}, ${details.state}`, 14, 50);
+    // Combine full address
+    const fullAddress = `${details.address}, ${details.city}, ${details.state} ${details.zipCode}`;
 
-    // General Notes
+    doc.setFontSize(20);
+    doc.setTextColor(22, 163, 74); // Green header
+    doc.text("Ceres Pacifica HQS Inspections", pageWidth / 2, 20, { align: "center" });
+    
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`PHA: ${details.phaName}`, 20, 30); // PHA Name
+    doc.text(`Tenant: ${details.tenantName}`, 20, 40);
+    doc.text(`Tenant ID: ${details.tenantId}`, 120, 40); // Added to header
+    doc.text(`Address: ${fullAddress}`, 20, 50);
+    doc.text(`Date: ${details.inspectionDate}`, 20, 60);
+    doc.text(`Inspector: ${details.inspectorName}`, 120, 60);
+    doc.text(`Unit Type: ${details.unitType}`, 20, 70);
+    doc.text(`Year Built: ${details.yearBuilt}`, 120, 70);
+    doc.text(`Inspection Type: ${details.inspectionType}`, 20, 80); // Added Inspection Type
+
+    let y = 90; // Adjusted Y start
+
+    // Check for general notes
     if (generalNotes) {
-      doc.setFontSize(12);
-      doc.text("General Inspection Notes:", 14, 60);
+      doc.setFontSize(14);
+      doc.setTextColor(22, 163, 74);
+      doc.text("General Inspection Notes", 20, y);
+      y += 10;
       doc.setFontSize(10);
-      const splitNotes = doc.splitTextToSize(generalNotes, 180);
-      doc.text(splitNotes, 14, 65);
+      doc.setTextColor(0);
+      const splitNotes = doc.splitTextToSize(generalNotes, pageWidth - 40);
+      doc.text(splitNotes, 20, y);
+      y += splitNotes.length * 7 + 10;
     }
 
-    let yPos = generalNotes ? 80 : 60;
-
-    // Table of items
-    const tableBody: any[] = [];
-    sections.forEach(section => {
-      // Location text
-      let locText = '';
-      if (section.location.horizontal || section.location.vertical || section.location.floor) {
-        locText = ` (Loc: ${section.location.horizontal}/${section.location.vertical} Fl:${section.location.floor})`;
+    sections.forEach((section) => {
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
       }
-      tableBody.push([{ content: section.title + locText, colSpan: 3, styles: { fillColor: [22, 163, 74], textColor: 255, fontStyle: 'bold' } }]);
       
+      doc.setFontSize(14);
+      doc.setTextColor(255, 255, 255);
+      // Draw header bg
+      doc.setFillColor(22, 163, 74);
+      doc.rect(15, y - 6, pageWidth - 30, 10, 'F');
+      
+      // Title + Location
+      let titleText = section.title;
+      if (section.location.horizontal || section.location.vertical || section.location.floor) {
+          titleText += `   [Loc: ${section.location.horizontal}/${section.location.vertical} Floor: ${section.location.floor}]`;
+      }
+      doc.text(titleText, 20, y);
+      y += 12;
+
       section.items.forEach(item => {
-        const statusColor = item.status === InspectionStatus.FAIL ? [220, 38, 38] : [0, 0, 0];
-        let label = item.label;
-        if (item.is24Hour) label += " [24H FAIL]";
-        
-        let notes = item.comment;
-        if (item.status === InspectionStatus.FAIL && item.responsibility) {
-          notes = `[Resp: ${item.responsibility}] ${notes}`;
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
         }
 
-        tableBody.push([
-          { content: label, styles: { textColor: statusColor } },
-          { content: item.status, styles: { fontStyle: 'bold' } },
-          notes
-        ]);
+        const statusColor = item.status === InspectionStatus.FAIL 
+          ? [220, 38, 38] // Red
+          : item.status === InspectionStatus.PASS 
+          ? [22, 163, 74] // Green
+          : [100, 116, 139]; // Slate
+        
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        doc.text(item.label, 20, y);
+        
+        doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
+        doc.setFont("helvetica", "bold");
+        let statusText: string = item.status;
+        if (item.status === InspectionStatus.FAIL && item.is24Hour) statusText += " (24HR)";
+        doc.text(statusText, 140, y, { align: "right" });
+        
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(0);
+        
+        if (item.comment || (item.status === InspectionStatus.FAIL && item.responsibility)) {
+          y += 5;
+          doc.setFontSize(9);
+          doc.setTextColor(80, 80, 80);
+          let comment = item.comment ? `Note: ${item.comment}` : '';
+          if (item.status === InspectionStatus.FAIL && item.responsibility) {
+              comment = `[Responsibility: ${item.responsibility.toUpperCase()}] ${comment}`;
+          }
+          
+          const splitComment = doc.splitTextToSize(comment, 150);
+          doc.text(splitComment, 25, y);
+          y += splitComment.length * 4;
+        }
+        
+        y += 8;
+        doc.setDrawColor(200);
+        doc.line(20, y-2, pageWidth-20, y-2);
       });
+      y += 10;
     });
 
-    autoTable(doc, {
-      startY: yPos,
-      head: [['Item', 'Status', 'Notes']],
-      body: tableBody,
-      theme: 'grid'
-    });
+    // Photo Addendum
+    const allPhotos: {label: string, data: string}[] = [];
+    // Collect item photos
+    sections.forEach(s => s.items.forEach(i => {
+      if (i.photos) i.photos.forEach(p => allPhotos.push({ label: `${s.title} - ${i.label}`, data: p }));
+    }));
+    // Collect general photos
+    generalPhotos.forEach(p => allPhotos.push({ label: "General Evidence", data: p }));
 
-    // Signatures on Custom Report
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
-    if (inspectorSignature) {
-      doc.text("Inspector Signature", 14, finalY);
-      doc.addImage(inspectorSignature, 'PNG', 14, finalY + 5, 50, 15);
-    }
-    if (secondarySignature) {
-      doc.text(`${signerType} Signature`, 100, finalY);
-      doc.addImage(secondarySignature, 'PNG', 100, finalY + 5, 50, 15);
+    if (allPhotos.length > 0) {
+      doc.addPage();
+      doc.setFontSize(16);
+      doc.setTextColor(0);
+      doc.text("Photo Addendum", pageWidth/2, 20, { align: "center" });
+      
+      let py = 40;
+      allPhotos.forEach((photo, idx) => {
+        if (py > 200) {
+          doc.addPage();
+          py = 40;
+        }
+        doc.setFontSize(10);
+        doc.text(`Photo ${idx+1}: ${photo.label}`, 20, py - 5);
+        try {
+            doc.addImage(photo.data, 'JPEG', 20, py, 80, 60);
+        } catch (e) {
+            doc.text("[Image Error]", 20, py + 30);
+        }
+        
+        // Layout logic: 2 per row? or 1 per row? Let's do 2 columns if fitting, simple stack for now
+        // Stack logic
+        py += 75;
+      });
     }
 
-    doc.save(`HQS_Report_${details.address.replace(/\s/g, '_')}.pdf`);
+    // Signature on Custom Report
+    if (signature) {
+        if (y > 240) doc.addPage();
+        doc.setFontSize(12);
+        doc.setTextColor(0);
+        doc.text("Inspector Signature:", 20, y + 20);
+        doc.addImage(signature, 'PNG', 20, y + 25, 60, 30);
+    }
+
+    doc.save(`HQS_Report_${details.tenantName.replace(/\s/g, '_')}.pdf`);
   };
-
 
   // --- RENDER ---
 
-  if (view === 'setup') {
+  if (step === 'setup') {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-900 p-4 flex flex-col items-center">
-        <h1 className="text-3xl font-bold text-green-700 mb-2 text-center">Ceres Pacifica HQS Inspections</h1>
-        <p className="text-slate-500 mb-6">Setup Inspection Details</p>
+      <div className="min-h-screen bg-slate-900 text-white p-6 flex flex-col items-center justify-center relative">
+        <TutorialOverlay isOpen={showTutorial} onClose={() => setShowTutorial(false)} />
         
-        <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-2xl space-y-4 border border-slate-200">
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <button onClick={() => setShowTutorial(true)} className="absolute top-4 right-4 text-white hover:text-green-400 text-2xl">
+           <HelpIcon />
+        </button>
+
+        <div className="w-full max-w-md space-y-6">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-green-500 mb-2">Ceres Pacifica HQS Inspections</h1>
+            <p className="text-slate-400">Voice-Enabled Inspection Assistant</p>
+            <button onClick={() => setShowTutorial(true)} className="mt-4 text-sm text-green-400 underline hover:text-green-300">
+               <i className="fas fa-book mr-1"></i> How to use this app
+            </button>
+          </div>
+
+          <div className="bg-slate-800 p-6 rounded-xl shadow-xl space-y-4">
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Inspection Type</label>
-              <select
-                className="w-full p-3 bg-slate-900 text-white rounded-lg"
-                value={details.inspectionType}
-                onChange={e => setDetails({...details, inspectionType: e.target.value as any})}
-              >
-                <option>Initial</option>
-                <option>Annual</option>
-                <option>Reinspection</option>
-                <option>Special</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">PHA Name</label>
-               <div className="relative">
+              <label className="block text-sm text-slate-400 mb-1">Public Housing Authority (PHA)</label>
+              <div className="flex gap-2">
                 <input 
                   type="text" 
-                  className="w-full p-3 bg-slate-900 text-white rounded-lg pr-10"
                   value={details.phaName}
                   onChange={e => setDetails({...details, phaName: e.target.value})}
+                  className="flex-1 bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+                  placeholder="e.g. LA County Housing Authority"
                 />
-                <button 
-                  onClick={() => {/* Simple voice handler logic inline or generalized */}}
-                  className="absolute right-2 top-2 text-slate-400 hover:text-white"
-                >
-                  <MicIcon />
+                <button onClick={() => handleDictation(v => setDetails({...details, phaName: v}))} className="p-3 bg-slate-700 rounded-lg text-white hover:bg-slate-600">
+                  {isListening ? <MicActiveIcon /> : <MicIcon />}
                 </button>
               </div>
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-1">Tenant Name</label>
-            <VoiceInput 
-              value={details.tenantName}
-              onChange={(val) => setDetails({...details, tenantName: val})}
-              className="h-12"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-1">Tenant ID / T-Code</label>
-            <input 
-               type="text"
-               value={details.tenantId}
-               onChange={e => setDetails({...details, tenantId: e.target.value})}
-               className="w-full p-3 bg-slate-900 text-white rounded-lg"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-1">Address</label>
-            <VoiceInput 
-              value={details.address}
-              onChange={(val) => setDetails({...details, address: val})}
-            />
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
             <div>
-               <label className="block text-sm font-bold text-slate-700 mb-1">Zip Code</label>
-               <input 
-                  type="text" 
-                  maxLength={5}
-                  value={details.zipCode}
-                  onChange={e => setDetails({...details, zipCode: e.target.value.replace(/\D/g,'')})}
-                  className="w-full p-3 bg-slate-900 text-white rounded-lg"
-                  placeholder="12345"
-               />
-            </div>
-            <div>
-               <label className="block text-sm font-bold text-slate-700 mb-1">City</label>
-               <input type="text" readOnly value={details.city} className="w-full p-3 bg-slate-800 text-slate-400 rounded-lg cursor-not-allowed" />
-            </div>
-            <div>
-               <label className="block text-sm font-bold text-slate-700 mb-1">State</label>
-               <input type="text" readOnly value={details.state} className="w-full p-3 bg-slate-800 text-slate-400 rounded-lg cursor-not-allowed" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Unit Type</label>
-              <select 
-                className="w-full p-3 bg-slate-900 text-white rounded-lg"
-                value={details.unitType}
-                onChange={e => setDetails({...details, unitType: e.target.value as any})}
+              <label className="block text-sm text-slate-400 mb-1">Type of Inspection</label>
+              <select
+                value={details.inspectionType}
+                onChange={e => setDetails({...details, inspectionType: e.target.value as any})}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
               >
-                <option>S/F Detached</option>
-                <option>Duplex/Triplex</option>
-                <option>Town House</option>
-                <option>Apartment</option>
-                <option>Manufactured</option>
-                <option>SRO</option>
-                <option>Shared Housing</option>
-                <option>Other</option>
+                <option value="Initial">Initial</option>
+                <option value="Reinspection">Reinspection</option>
+                <option value="Special">Special</option>
+                <option value="Annual">Annual</option>
               </select>
             </div>
+
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Year Built</label>
-              <div className="relative">
+              <label className="block text-sm text-slate-400 mb-1">Tenant Name</label>
+              <div className="flex gap-2">
                 <input 
-                  type="number" 
-                  value={details.yearBuilt}
-                  onChange={e => setDetails({...details, yearBuilt: parseInt(e.target.value) || 1980})}
-                  className="w-full p-3 bg-slate-900 text-white rounded-lg"
+                  type="text" 
+                  value={details.tenantName}
+                  onChange={e => setDetails({...details, tenantName: e.target.value})}
+                  className="flex-1 bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+                  placeholder="Jane Doe"
                 />
-                {details.yearBuilt < 1978 ? (
-                  <div className="absolute right-2 top-2 px-2 py-1 bg-orange-500 text-white text-xs font-bold rounded animate-pulse">
-                    Pre-1978 (Lead)
-                  </div>
-                ) : (
-                  <div className="absolute right-2 top-2 px-2 py-1 bg-green-500 text-white text-xs font-bold rounded">
-                    Post-1978
-                  </div>
-                )}
+                <button onClick={() => handleDictation(v => setDetails({...details, tenantName: v}))} className="p-3 bg-slate-700 rounded-lg text-white hover:bg-slate-600">
+                  {isListening ? <MicActiveIcon /> : <MicIcon />}
+                </button>
               </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Bedrooms</label>
+              <label className="block text-sm text-slate-400 mb-1">Tenant ID / Code</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={details.tenantId}
+                  onChange={e => setDetails({...details, tenantId: e.target.value})}
+                  className="flex-1 bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+                  placeholder="T-12345 or A-987"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm text-slate-400 mb-1">Street Address</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={details.address}
+                  onChange={e => setDetails({...details, address: e.target.value})}
+                  className="flex-1 bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+                  placeholder="123 Main St, Apt 4B"
+                />
+                <button onClick={() => handleDictation(v => setDetails({...details, address: v}))} className="p-3 bg-slate-700 rounded-lg text-white hover:bg-slate-600">
+                  {isListening ? <MicActiveIcon /> : <MicIcon />}
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                 <label className="block text-sm text-slate-400 mb-1">Zip Code</label>
+                 <input 
+                   type="text" 
+                   value={details.zipCode}
+                   onChange={e => handleZipCodeChange(e.target.value)}
+                   className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+                   placeholder="90210"
+                   maxLength={5}
+                 />
+              </div>
+              <div>
+                 <label className="block text-sm text-slate-400 mb-1">City</label>
+                 <input 
+                   type="text" 
+                   value={details.city}
+                   onChange={e => setDetails({...details, city: e.target.value})}
+                   className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+                   placeholder="Beverly Hills"
+                 />
+              </div>
+              <div>
+                 <label className="block text-sm text-slate-400 mb-1">State</label>
+                 <input 
+                   type="text" 
+                   value={details.state}
+                   onChange={e => setDetails({...details, state: e.target.value})}
+                   className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+                   placeholder="CA"
+                 />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Bedrooms</label>
+                <select 
+                  value={details.bedrooms}
+                  onChange={e => setDetails({...details, bedrooms: parseInt(e.target.value)})}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+                >
+                  <option value={0}>0 (Studio)</option>
+                  <option value={1}>1</option>
+                  <option value={2}>2</option>
+                  <option value={3}>3</option>
+                  <option value={4}>4</option>
+                  <option value={5}>5+</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Bathrooms</label>
+                <select 
+                  value={details.bathrooms}
+                  onChange={e => setDetails({...details, bathrooms: parseInt(e.target.value)})}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+                >
+                  <option value={1}>1</option>
+                  <option value={2}>2</option>
+                  <option value={3}>3</option>
+                  <option value={4}>4+</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm text-slate-400 mb-1">Unit Type</label>
               <select 
-                className="w-full p-3 bg-slate-900 text-white rounded-lg"
-                value={details.bedrooms}
-                onChange={e => setDetails({...details, bedrooms: parseInt(e.target.value)})}
+                value={details.unitType}
+                onChange={e => setDetails({...details, unitType: e.target.value as any})}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
               >
-                <option value={0}>0 (Studio)</option>
-                <option value={1}>1</option>
-                <option value={2}>2</option>
-                <option value={3}>3</option>
-                <option value={4}>4</option>
-                <option value={5}>5+</option>
+                <option value="S/F Detached">Single Family Detached</option>
+                <option value="Duplex/Triplex">Duplex/Triplex</option>
+                <option value="Town House">Town House</option>
+                <option value="Apartment">Apartment</option>
+                <option value="Manufactured">Manufactured (Mobile Home)</option>
+                <option value="SRO">Single Room Occupancy (SRO)</option>
+                <option value="Shared Housing">Shared Housing</option>
+                <option value="Other">Other</option>
               </select>
             </div>
+
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Bathrooms</label>
-              <select 
-                className="w-full p-3 bg-slate-900 text-white rounded-lg"
-                value={details.bathrooms}
-                onChange={e => setDetails({...details, bathrooms: parseInt(e.target.value)})}
-              >
-                <option value={1}>1</option>
-                <option value={2}>2</option>
-                <option value={3}>3+</option>
-              </select>
+              <label className="block text-sm text-slate-400 mb-1">Year Built</label>
+              <input 
+                type="number" 
+                value={details.yearBuilt}
+                onChange={e => setDetails({...details, yearBuilt: parseInt(e.target.value)})}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+              />
+              {details.yearBuilt < 1978 ? (
+                <div className="text-xs text-yellow-500 mt-1">⚠️ Pre-1978: Lead Paint Regulations Apply</div>
+              ) : (
+                <div className="text-xs text-green-500 mt-1">✅ Post-1978: Lead Paint Exempt</div>
+              )}
             </div>
+
+            <button 
+              onClick={startInspection}
+              className="w-full py-4 bg-green-600 hover:bg-green-500 rounded-lg font-bold text-lg transition-colors shadow-lg shadow-green-900/20"
+            >
+              Start Inspection
+            </button>
           </div>
-
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-1">Inspector Name</label>
-            <input 
-              className="w-full p-3 bg-slate-900 text-white rounded-lg"
-              value={details.inspectorName}
-              onChange={e => setDetails({...details, inspectorName: e.target.value})}
-            />
-          </div>
-
-          <button 
-            onClick={startInspection}
-            className="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg text-lg transition-all mt-6"
-          >
-            Start Inspection
-          </button>
-
-          <button
-            onClick={() => setShowTutorial(true)}
-            className="w-full py-2 text-slate-500 hover:text-green-600 font-medium text-sm flex items-center justify-center gap-2"
-          >
-            <HelpIcon /> View Quick Start Guide
-          </button>
         </div>
-        <TutorialOverlay isOpen={showTutorial} onClose={() => setShowTutorial(false)} />
       </div>
     );
   }
 
-  if (view === 'inspection') {
-    return (
-      <div className="min-h-screen bg-slate-100 pb-20">
-        {/* Header */}
-        <header className="bg-green-700 text-white p-4 sticky top-0 z-40 shadow-md flex justify-between items-center">
-           <div className="font-bold text-lg truncate max-w-[200px]">{details.address || "New Inspection"}</div>
-           <div className="flex space-x-3">
-             <button onClick={resetApp} className="bg-green-800 p-2 rounded-full hover:bg-green-900" title="Restart">
-               <RestartIcon />
-             </button>
-             <button 
-               onClick={() => setView('summary')}
-               className="bg-white text-green-700 px-4 py-2 rounded-lg font-bold text-sm hover:bg-green-50"
-             >
-               Finish
-             </button>
-           </div>
-        </header>
+  // --- INSPECTION VIEW ---
+  return (
+    <div className="min-h-screen pb-20 bg-slate-100 text-slate-900">
+      <TutorialOverlay isOpen={showTutorial} onClose={() => setShowTutorial(false)} />
+      
+      <ConfirmationModal 
+        isOpen={showResetConfirm}
+        onConfirm={confirmReset}
+        onCancel={() => setShowResetConfirm(false)}
+        title="Restart Inspection?"
+        message="Are you sure you want to start a fresh inspection? All current data, including photos and signatures, will be permanently lost."
+      />
 
-        {/* Main Content */}
-        <div className="max-w-3xl mx-auto p-4 space-y-6">
-          
-          {/* General Voice Command */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 sticky top-20 z-30">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Global Voice Command</label>
-            <div className="flex items-center gap-2">
-               <div className="flex-1">
-                  <VoiceInput 
-                    value="" 
-                    onChange={() => {}} 
-                    onAiRequest={(txt) => handleVoiceCommand(txt)}
-                    isProcessing={loading}
-                    placeholder="Speak any observation (e.g., 'Kitchen sink is leaking')"
-                    className="h-12" 
-                  />
-               </div>
+      {/* CAMERA INPUT (Hidden) */}
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        ref={fileInputRef}
+        onChange={handlePhotoUpload}
+        className="absolute opacity-0 pointer-events-none"
+      />
+
+      {/* HEADER */}
+      <header className="bg-slate-900 text-white p-4 sticky top-0 z-10 shadow-md flex justify-between items-center">
+        <div className="flex items-center gap-3 overflow-hidden">
+           <h1 className="font-bold text-lg truncate">Ceres HQS: {details.address}</h1>
+           {/* RESTART BUTTON */}
+           <button 
+             onClick={requestReset}
+             className="text-slate-400 hover:text-white transition-colors"
+             title="Restart Inspection"
+           >
+             <RestartIcon />
+           </button>
+           {/* HELP BUTTON */}
+           <button onClick={() => setShowTutorial(true)} className="text-slate-400 hover:text-white transition-colors" title="Help / Tutorial">
+             <HelpIcon />
+           </button>
+        </div>
+        <button 
+          onClick={() => setStep(step === 'inspection' ? 'summary' : 'inspection')}
+          className="bg-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-500 flex-shrink-0"
+        >
+          {step === 'inspection' ? 'Summary' : 'Back to List'}
+        </button>
+      </header>
+
+      <main className="p-4 max-w-3xl mx-auto space-y-6">
+        
+        {step === 'inspection' ? (
+          <>
+            {/* DYNAMIC ROOM CONTROLS */}
+            <div className="flex gap-2 mb-4">
+               <button onClick={addBedroom} className="flex-1 py-2 bg-slate-200 hover:bg-slate-300 rounded text-slate-700 font-semibold text-sm flex items-center justify-center gap-2">
+                 <PlusIcon /> Add Bedroom
+               </button>
+               <button onClick={addBathroom} className="flex-1 py-2 bg-slate-200 hover:bg-slate-300 rounded text-slate-700 font-semibold text-sm flex items-center justify-center gap-2">
+                 <PlusIcon /> Add Bathroom
+               </button>
             </div>
-            {loading && <div className="text-xs text-green-600 mt-1 animate-pulse font-bold"><WandSpinIcon /> AI Processing...</div>}
-          </div>
 
-          {/* Room Sections */}
-          {sections.map(section => (
-            <div key={section.id} className="bg-white rounded-xl shadow-md overflow-hidden border border-slate-200">
-              <div className="bg-green-600 p-3 text-white flex justify-between items-center">
-                <h3 className="font-bold text-lg">{section.title}</h3>
-                <span className="text-xs bg-green-800 px-2 py-1 rounded-full">{section.items.filter(i => i.status === InspectionStatus.FAIL).length} Fails</span>
-              </div>
-              
-              <div className="p-4">
-                {/* Location Selector for this room */}
+            {sections.map((section) => (
+              <div key={section.id} className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200">
+                {/* SECTION HEADER - GREEN */}
+                <div className="bg-green-600 text-white px-4 py-3 flex justify-between items-center">
+                  <h2 className="font-bold text-lg">{section.title}</h2>
+                </div>
+
+                {/* LOCATION TOOLBAR */}
                 <LocationSelector 
                   location={section.location} 
-                  onChange={(loc) => {
-                    setSections(prev => prev.map(s => s.id === section.id ? {...s, location: loc} : s));
-                  }}
+                  onChange={(loc) => updateSection(section.id, { location: loc })}
                 />
 
-                <div className="space-y-4">
-                  {section.items.map(item => (
-                    <div key={item.id} className={`border-b border-slate-100 pb-4 last:border-0 ${item.status === InspectionStatus.FAIL ? 'bg-red-50 -mx-4 px-4 pt-2' : ''}`}>
+                <div className="divide-y divide-slate-100">
+                  {section.items.map((item) => (
+                    <div key={item.id} className="p-4 hover:bg-slate-50 transition-colors">
                       <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center max-w-[60%]">
-                          <span className="font-medium text-slate-800">{item.label}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-slate-700">{item.id} {item.label}</span>
                           <Tooltip text={item.hqsGuidance} />
-                          {item.is24Hour && <span className="ml-2 text-[10px] bg-red-600 text-white px-1 py-0.5 rounded font-bold flex items-center gap-1"><ClockIcon /> 24H</span>}
                         </div>
-                        
-                        {/* Status Buttons */}
-                        <div className="flex flex-wrap gap-1 justify-end">
-                           <button 
-                             onClick={() => toggle24Hour(section.id, item.id)}
-                             className={`px-2 py-1 rounded text-xs font-bold border ${item.is24Hour ? 'bg-red-800 text-white border-red-800' : 'bg-slate-100 text-slate-400 border-slate-200'}`}
-                           >
-                             24H
-                           </button>
-                           <button 
-                             onClick={() => toggleStatus(section.id, item.id, InspectionStatus.NOT_APPLICABLE)}
-                             className={`p-2 rounded-lg text-xs font-bold ${item.status === InspectionStatus.NOT_APPLICABLE ? 'bg-slate-600 text-white' : 'bg-slate-100 text-slate-400'}`}
-                           >
-                             N/A
-                           </button>
-                           <button 
-                             onClick={() => toggleStatus(section.id, item.id, InspectionStatus.PASS)}
-                             className={`p-2 rounded-lg ${item.status === InspectionStatus.PASS ? 'bg-green-500 text-white' : 'bg-slate-100 text-slate-300'}`}
-                           >
-                             <CheckIcon />
-                           </button>
-                           <button 
-                             onClick={() => toggleStatus(section.id, item.id, InspectionStatus.FAIL)}
-                             className={`p-2 rounded-lg ${item.status === InspectionStatus.FAIL ? 'bg-red-500 text-white' : 'bg-slate-100 text-slate-300'}`}
-                           >
-                             <FailIcon />
-                           </button>
+                        <div className="flex space-x-1">
+                          {/* 24H TOGGLE */}
+                          <button
+                            onClick={() => updateItem(section.id, item.id, { is24Hour: !item.is24Hour })}
+                            className={`px-2 py-1 text-xs font-bold rounded border ${item.is24Hour ? 'bg-red-900 text-white border-red-900' : 'bg-slate-100 text-slate-400 border-slate-200'}`}
+                            title="Toggle 24-Hour Emergency Fail"
+                          >
+                            24H
+                          </button>
+
+                          <button
+                            onClick={() => updateItem(section.id, item.id, { status: InspectionStatus.PASS })}
+                            className={`p-2 rounded-lg ${item.status === InspectionStatus.PASS ? 'bg-green-100 text-green-600' : 'text-slate-300 hover:bg-slate-100'}`}
+                          >
+                            <CheckIcon />
+                          </button>
+                          <button
+                            onClick={() => updateItem(section.id, item.id, { status: InspectionStatus.FAIL })}
+                            className={`p-2 rounded-lg ${item.status === InspectionStatus.FAIL ? 'bg-red-100 text-red-600' : 'text-slate-300 hover:bg-slate-100'}`}
+                          >
+                            <FailIcon />
+                          </button>
+                          <button
+                            onClick={() => updateItem(section.id, item.id, { status: InspectionStatus.NOT_APPLICABLE })}
+                            className={`px-2 py-1 text-xs font-bold rounded ${item.status === InspectionStatus.NOT_APPLICABLE ? 'bg-slate-600 text-white' : 'bg-slate-100 text-slate-400'}`}
+                          >
+                            N/A
+                          </button>
                         </div>
                       </div>
+                      
+                      {/* VISUAL INDICATOR FOR 24 HR FAIL */}
+                      {item.status === InspectionStatus.FAIL && item.is24Hour && (
+                         <div className="mb-2 inline-flex items-center gap-1 bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold border border-red-200">
+                           <ClockIcon /> 24-HOUR EMERGENCY FAIL
+                         </div>
+                      )}
 
-                      {/* FAIL Responsibility Selector */}
+                      {/* RESPONSIBILITY TOGGLE FOR FAIL */}
                       {item.status === InspectionStatus.FAIL && (
-                        <div className="flex items-center justify-end gap-2 mb-2 mt-1">
-                          <span className="text-[10px] font-bold uppercase text-slate-500">Responsibility:</span>
-                          <button 
-                            onClick={() => setResponsibility(section.id, item.id, 'Owner')}
-                            className={`px-3 py-1 rounded text-xs font-bold border ${item.responsibility === 'Owner' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-500 border-slate-300'}`}
-                          >
-                            Owner
-                          </button>
-                          <button 
-                            onClick={() => setResponsibility(section.id, item.id, 'Tenant')}
-                            className={`px-3 py-1 rounded text-xs font-bold border ${item.responsibility === 'Tenant' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-500 border-slate-300'}`}
-                          >
-                            Tenant
-                          </button>
+                        <div className="mb-2 flex items-center gap-2">
+                            <span className="text-xs font-bold text-slate-500">Responsibility:</span>
+                            <div className="flex rounded border border-slate-200 overflow-hidden text-xs font-bold">
+                                <button 
+                                    onClick={() => updateItem(section.id, item.id, { responsibility: 'owner' })}
+                                    className={`px-2 py-1 ${item.responsibility === 'owner' ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}
+                                >
+                                    Owner
+                                </button>
+                                <button 
+                                    onClick={() => updateItem(section.id, item.id, { responsibility: 'tenant' })}
+                                    className={`px-2 py-1 ${item.responsibility === 'tenant' ? 'bg-orange-500 text-white' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}
+                                >
+                                    Tenant
+                                </button>
+                            </div>
                         </div>
                       )}
 
-                      {/* Notes & Photos */}
-                      <div className="mt-2 space-y-2">
-                        <VoiceInput 
-                           value={item.comment}
-                           onChange={(val) => {
-                             setSections(prev => prev.map(s => s.id === section.id ? {
-                               ...s, items: s.items.map(i => i.id === item.id ? {...i, comment: val} : i)
-                             } : s));
-                           }}
-                           onAiRequest={(txt) => handleVoiceCommand(txt, section.id, item.id)}
-                           isProcessing={activeAiItem === item.id && loading}
-                           placeholder="Notes..."
+                      {/* NOTES INPUT */}
+                      {(item.status === InspectionStatus.FAIL || item.status === InspectionStatus.INCONCLUSIVE || item.comment || listeningTarget === item.id) && (
+                        <VoiceInput
+                          value={item.comment}
+                          onChange={(val) => updateItem(section.id, item.id, { comment: val })}
+                          isListening={listeningTarget === item.id && isListening}
+                          onVoiceStart={() => handleVoiceCommand({ sectionId: section.id, itemId: item.id, currentLabel: item.label })}
+                          onMagicClick={() => handleMagicAnalysis(item.comment, { sectionId: section.id, itemId: item.id, currentLabel: item.label })}
+                          onCameraClick={() => handleCameraClick({ sectionId: section.id, itemId: item.id })}
+                          photos={item.photos}
                         />
-                        
-                        {/* Photo Button */}
-                        <div className="flex items-center gap-2 mt-2">
-                          <label className="flex items-center gap-2 text-xs font-bold text-slate-500 cursor-pointer bg-slate-200 px-3 py-2 rounded hover:bg-slate-300">
-                            <CameraIcon /> Add Photo
-                            <input 
-                               type="file" 
-                               accept="image/*" 
-                               capture="environment" 
-                               className="hidden" // Keep standard hidden logic or robust opacity logic if debugging
-                               style={{ opacity: 0, position: 'absolute', width: 1, height: 1 }}
-                               onChange={(e) => {
-                                 if (e.target.files && e.target.files[0]) {
-                                   addPhoto(section.id, item.id, e.target.files[0]);
-                                 }
-                               }}
-                            />
-                          </label>
-                          {item.photos && item.photos.length > 0 && (
-                            <span className="text-xs text-blue-600 font-bold">{item.photos.length} Photos Attached</span>
-                          )}
-                        </div>
-                      </div>
+                      )}
                     </div>
                   ))}
                 </div>
 
-                {/* Pass All Footer */}
-                <div className="mt-6 pt-4 border-t border-slate-200 flex justify-end">
-                  <button 
-                    onClick={() => handlePassSection(section.id)}
-                    className="text-green-600 font-bold text-sm flex items-center gap-2 px-4 py-2 rounded-lg bg-green-50 hover:bg-green-100 border border-green-200 transition-colors"
-                  >
-                    <CheckIcon /> Pass Remaining Items
-                  </button>
+                {/* PASS ALL FOOTER */}
+                <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
+                   <button 
+                     onClick={() => handlePassSection(section.id)}
+                     className="text-green-600 hover:text-green-700 text-sm font-semibold flex items-center gap-1 px-3 py-2 rounded hover:bg-green-50 transition-colors"
+                   >
+                     <CheckIcon /> Pass Remaining Items
+                   </button>
                 </div>
-
               </div>
+            ))}
+          </>
+        ) : (
+          <div className="bg-white rounded-xl shadow-xl p-6 space-y-6">
+            <h2 className="text-2xl font-bold border-b pb-4">Inspection Summary</h2>
+            
+            <div className="grid grid-cols-2 gap-4 text-sm">
+               <div>
+                 <span className="block text-slate-500">PHA</span>
+                 <span className="font-medium">{details.phaName}</span>
+               </div>
+               <div>
+                 <span className="block text-slate-500">Tenant</span>
+                 <span className="font-medium">{details.tenantName}</span>
+               </div>
+               <div>
+                 <span className="block text-slate-500">Address</span>
+                 <span className="font-medium">{details.address}</span>
+               </div>
             </div>
-          ))}
 
-          {/* Add Rooms */}
-          <div className="flex gap-4 justify-center py-6">
-            <button onClick={() => addNewRoom('bedroom')} className="flex items-center gap-2 px-4 py-2 bg-slate-200 rounded-full text-slate-700 font-bold hover:bg-slate-300">
-              <PlusIcon /> Add Bedroom
-            </button>
-            <button onClick={() => addNewRoom('bathroom')} className="flex items-center gap-2 px-4 py-2 bg-slate-200 rounded-full text-slate-700 font-bold hover:bg-slate-300">
-              <PlusIcon /> Add Bathroom
-            </button>
-          </div>
+            {/* FAIL SUMMARY */}
+            <div className="space-y-2">
+              <h3 className="font-bold text-red-600">Failed Items</h3>
+              {sections.flatMap(s => s.items).filter(i => i.status === InspectionStatus.FAIL).length === 0 ? (
+                <p className="text-slate-500 italic">No failed items.</p>
+              ) : (
+                sections.map(section => {
+                  const fails = section.items.filter(i => i.status === InspectionStatus.FAIL);
+                  if (fails.length === 0) return null;
+                  return (
+                    <div key={section.id} className="bg-red-50 p-3 rounded-lg border border-red-100">
+                      <h4 className="font-semibold text-red-800 text-sm mb-2">{section.title}</h4>
+                      <ul className="space-y-1">
+                        {fails.map(item => (
+                          <li key={item.id} className="text-sm text-red-700 flex justify-between">
+                            <span>
+                                {item.label} 
+                                {item.is24Hour && <strong className="ml-1">(24HR)</strong>}
+                                {item.responsibility === 'tenant' && <span className="ml-1 text-orange-600 font-bold">[Tenant]</span>}
+                            </span>
+                            <span className="italic text-slate-600">{item.comment}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })
+              )}
+            </div>
 
-        </div>
-        <ConfirmationModal 
-           isOpen={showResetConfirm} 
-           title="Restart Inspection?" 
-           message="Are you sure? All unsaved progress for this unit will be lost." 
-           onConfirm={confirmReset} 
-           onCancel={() => setShowResetConfirm(false)} 
-        />
-      </div>
-    );
-  }
+            {/* GENERAL NOTES */}
+            <div className="space-y-2">
+              <h3 className="font-bold text-slate-800">Detailed General Inspection Notes</h3>
+              <VoiceInput 
+                value={generalNotes}
+                onChange={setGeneralNotes}
+                isListening={listeningTarget === 'general' && isListening}
+                onVoiceStart={() => handleVoiceCommand()} // General mode
+                onCameraClick={() => handleCameraClick('general')}
+                photos={generalPhotos}
+              />
+            </div>
 
-  // SUMMARY VIEW
-  return (
-    <div className="min-h-screen bg-slate-50 p-6 max-w-4xl mx-auto">
-      <h2 className="text-2xl font-bold text-slate-800 mb-6 text-center">Inspection Summary</h2>
-      
-      {/* General Notes */}
-      <div className="bg-white p-6 rounded-xl shadow-md mb-6">
-        <h3 className="font-bold text-lg mb-4">Detailed General Inspection Notes</h3>
-        <VoiceInput 
-           value={generalNotes}
-           onChange={setGeneralNotes}
-           onAiRequest={(txt) => handleVoiceCommand(txt)} // Use generic handler
-           isProcessing={loading}
-           placeholder="Enter overall property notes, neighborhood conditions, etc."
-        />
-      </div>
+            {/* SIGNATURE PAD */}
+            <div className="border-t pt-4">
+              <label className="block text-sm font-medium mb-2">Inspector Signature</label>
+              <SignaturePad onEnd={setSignature} />
+            </div>
 
-      {/* Signatures */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-         <SignaturePad label="Inspector Signature" onSave={setInspectorSignature} />
-         <div className="flex flex-col gap-2">
-            <div className="bg-white border border-slate-200 rounded-lg p-2">
-              <label className="text-xs font-bold text-slate-500 uppercase">Signer</label>
-              <select 
-                value={signerType} 
-                onChange={(e: any) => setSignerType(e.target.value)}
-                className="w-full bg-transparent font-bold text-slate-800 outline-none"
+            <div className="flex flex-col gap-3 pt-4">
+              <button 
+                onClick={generatePDF}
+                className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold flex items-center justify-center gap-2"
               >
-                <option>Tenant</option>
-                <option>Owner</option>
-                <option>Landlord Representative</option>
-                <option>Other</option>
-              </select>
+                <FilePdfIcon /> Download Report
+              </button>
+              <button 
+                onClick={generateOfficialHUDForm}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold flex items-center justify-center gap-2"
+              >
+                <FilePdfIcon /> Generate Official HUD 52580
+              </button>
+              <div className="border-t border-slate-200 my-2"></div>
+              <button 
+                onClick={requestReset}
+                className="w-full py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold flex items-center justify-center gap-2"
+              >
+                <RestartIcon /> Finish & Start New Inspection
+              </button>
             </div>
-            <SignaturePad label={`${signerType} Signature`} onSave={setSecondarySignature} />
-         </div>
-      </div>
+          </div>
+        )}
+      </main>
 
-      {/* Action Buttons */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <button 
-          onClick={generateHUD52580}
-          className="flex items-center justify-center gap-2 py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg hover:bg-blue-700"
-        >
-          <FilePdfIcon /> Generate HUD 52580
-        </button>
-        <button 
-          onClick={generateCustomPDF}
-          className="flex items-center justify-center gap-2 py-4 bg-green-600 text-white rounded-xl font-bold shadow-lg hover:bg-green-700"
-        >
-          <FilePdfIcon /> Generate Custom Report
-        </button>
-      </div>
-
-      <div className="mt-8 flex flex-col gap-4">
-         <button 
-           onClick={() => setView('inspection')}
-           className="text-slate-500 hover:text-slate-800 font-medium"
-         >
-           Back to Checklist
-         </button>
-         
-         <button
-           onClick={resetApp}
-           className="w-full py-3 bg-slate-800 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-900"
-         >
-           <RestartIcon /> Start New Inspection
-         </button>
-      </div>
-      
-      <ConfirmationModal 
-           isOpen={showResetConfirm} 
-           title="Start New Inspection?" 
-           message="This will clear all current data. Ensure you have downloaded your reports first." 
-           onConfirm={confirmReset} 
-           onCancel={() => setShowResetConfirm(false)} 
-      />
+      {/* GLOBAL VOICE FAB */}
+      <button
+        onClick={() => handleVoiceCommand()}
+        className={`fixed bottom-6 right-6 p-4 rounded-full shadow-2xl transition-all transform hover:scale-110 z-50 ${isListening ? 'bg-red-500 animate-pulse' : 'bg-blue-600 hover:bg-blue-500'}`}
+      >
+        <i className={`fas fa-microphone text-white text-xl`}></i>
+      </button>
     </div>
   );
 }

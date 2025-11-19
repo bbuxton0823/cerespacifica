@@ -17,6 +17,7 @@ declare global {
 // --- CONSTANTS ---
 const INITIAL_DETAILS: UnitDetails = {
   phaName: '',
+  inspectionType: 'Initial',
   tenantName: '',
   tenantId: '',
   address: '',
@@ -138,7 +139,7 @@ const TutorialOverlay = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
           {slide === 0 && (
             <div className="space-y-8 text-center">
               <h3 className="text-2xl font-bold text-slate-800">1. Voice & Setup</h3>
-              <p className="text-slate-600 max-w-xl mx-auto">Use your voice to fill out forms quickly. The app uses AI to fix grammar and format your notes automatically.</p>
+              <p className="text-slate-600 max-w-xl mx-auto">Select your <strong>Inspection Type</strong>, fill details with your voice, and let AI handle the formatting.</p>
               
               <div className="relative max-w-md mx-auto bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg mt-8">
                  {/* Mock Setup Input */}
@@ -157,7 +158,12 @@ const TutorialOverlay = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                  </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto mt-8">
+              <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto mt-8">
+                <div className="bg-white p-3 rounded-lg shadow text-center border">
+                  <div className="text-orange-500 text-2xl mb-1"><i className="fas fa-clipboard-check"></i></div>
+                  <div className="text-xs font-bold text-slate-700">Inspection Type</div>
+                  <div className="text-[10px] text-slate-500">Initial, Annual, Special...</div>
+                </div>
                 <div className="bg-white p-3 rounded-lg shadow text-center border">
                   <div className="text-green-600 text-2xl mb-1"><i className="fas fa-map-marker-alt"></i></div>
                   <div className="text-xs font-bold text-slate-700">Zip Code</div>
@@ -1007,6 +1013,29 @@ export default function App() {
     });
     y = (doc as any).lastAutoTable.finalY;
 
+    // Third Row (Type of Inspection)
+    const checkbox = (label: string, checked: boolean) => `[${checked ? 'X' : ' '}] ${label}`;
+    const inspectionTypeString = 
+        checkbox("Initial", details.inspectionType === 'Initial') + "  " +
+        checkbox("Special", details.inspectionType === 'Special') + "  " +
+        checkbox("Reinspection", details.inspectionType === 'Reinspection') + "  " +
+        checkbox("Annual", details.inspectionType === 'Annual');
+
+    autoTable(doc, {
+        startY: y,
+        head: [['Type of Inspection', 'Date of Last Inspection', 'PHA']],
+        body: [[
+            inspectionTypeString,
+            "_________________",
+            details.phaName
+        ]],
+        theme: 'plain',
+        styles: { fontSize: 9, cellPadding: 2 },
+        headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold', lineWidth: 0.1 },
+        bodyStyles: { lineWidth: 0.1 }
+    });
+    y = (doc as any).lastAutoTable.finalY;
+
     // --- SECTION B: SUMMARY DECISION ---
     y += 5;
     doc.setFillColor(230, 230, 230);
@@ -1112,8 +1141,9 @@ export default function App() {
     doc.text(`Inspector: ${details.inspectorName}`, 120, 60);
     doc.text(`Unit Type: ${details.unitType}`, 20, 70);
     doc.text(`Year Built: ${details.yearBuilt}`, 120, 70);
+    doc.text(`Inspection Type: ${details.inspectionType}`, 20, 80); // Added Inspection Type
 
-    let y = 80;
+    let y = 90; // Adjusted Y start
 
     // Check for general notes
     if (generalNotes) {
@@ -1272,6 +1302,20 @@ export default function App() {
                   {isListening ? <MicActiveIcon /> : <MicIcon />}
                 </button>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm text-slate-400 mb-1">Type of Inspection</label>
+              <select
+                value={details.inspectionType}
+                onChange={e => setDetails({...details, inspectionType: e.target.value as any})}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white"
+              >
+                <option value="Initial">Initial</option>
+                <option value="Reinspection">Reinspection</option>
+                <option value="Special">Special</option>
+                <option value="Annual">Annual</option>
+              </select>
             </div>
 
             <div>

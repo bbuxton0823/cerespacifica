@@ -32,9 +32,10 @@ export interface RoomSection {
 }
 
 export interface UnitDetails {
-  phaName: string; // Added PHA Name
+  phaName: string;
+  inspectionType: 'Initial' | 'Annual' | 'Reinspection' | 'Special'; // Added Inspection Type
   tenantName: string;
-  tenantId: string; // Added T-Code/ID field
+  tenantId: string;
   address: string;
   city: string;
   state: string;

@@ -9,6 +9,7 @@ const createItem = (id: string, label: string, guidance: string): InspectionItem
   comment: '',
   hqsGuidance: guidance,
   is24Hour: false,
+  responsibility: 'Owner', // Default to Owner responsibility
   photos: []
 });
 

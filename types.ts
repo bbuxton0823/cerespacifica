@@ -14,6 +14,7 @@ export interface InspectionItem {
   comment: string;
   hqsGuidance: string; // The tooltip content
   is24Hour?: boolean; // New flag for 24-hour emergency fails
+  responsibility?: 'Owner' | 'Tenant'; // Responsibility for the item condition
   photos?: string[]; // Base64 strings of attached photos
 }
 
@@ -61,5 +62,6 @@ export interface AIIntent {
   status?: InspectionStatus;
   comment?: string;
   is24Hour?: boolean;
+  responsibility?: 'Owner' | 'Tenant';
   action: 'update_item' | 'general_note' | 'unknown';
 }

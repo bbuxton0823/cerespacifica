@@ -14,6 +14,23 @@ declare global {
   }
 }
 
+// --- CONSTANTS ---
+const INITIAL_DETAILS: UnitDetails = {
+  phaName: '',
+  tenantName: '',
+  tenantId: '',
+  address: '',
+  city: '',
+  state: '',
+  zipCode: '',
+  unitType: 'S/F Detached',
+  yearBuilt: 1980,
+  bedrooms: 1,
+  bathrooms: 1,
+  inspectionDate: new Date().toISOString().split('T')[0],
+  inspectorName: ''
+};
+
 // --- ICONS ---
 const MicIcon = () => <i className="fas fa-microphone"></i>;
 const MicActiveIcon = () => <i className="fas fa-microphone-lines text-red-500 animate-pulse"></i>;
@@ -28,6 +45,10 @@ const CameraIcon = () => <i className="fas fa-camera"></i>;
 const TrashIcon = () => <i className="fas fa-trash"></i>;
 const PlusIcon = () => <i className="fas fa-plus-circle"></i>;
 const EraserIcon = () => <i className="fas fa-eraser"></i>;
+const RestartIcon = () => <i className="fas fa-redo"></i>;
+const HelpIcon = () => <i className="fas fa-question-circle"></i>;
+const ArrowRightIcon = () => <i className="fas fa-arrow-right"></i>;
+const ArrowLeftIcon = () => <i className="fas fa-arrow-left"></i>;
 
 // --- COMPONENTS ---
 
@@ -39,6 +60,293 @@ const Tooltip = ({ text }: { text: string }) => (
     </div>
   </div>
 );
+
+const ConfirmationModal = ({ 
+  isOpen, 
+  onConfirm, 
+  onCancel, 
+  title, 
+  message 
+}: { 
+  isOpen: boolean; 
+  onConfirm: () => void; 
+  onCancel: () => void; 
+  title: string; 
+  message: string; 
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-sm w-full p-6 animate-fade-in">
+        <h3 className="text-lg font-bold text-slate-900 mb-2">{title}</h3>
+        <p className="text-slate-600 mb-6">{message}</p>
+        <div className="flex justify-end space-x-3">
+          <button 
+            onClick={onCancel}
+            className="px-4 py-2 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 font-medium"
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={onConfirm}
+            className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 font-medium"
+          >
+            Confirm Reset
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- TUTORIAL OVERLAY COMPONENT ---
+const TutorialOverlay = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  const [slide, setSlide] = useState(0);
+
+  if (!isOpen) return null;
+
+  const nextSlide = () => setSlide(prev => Math.min(prev + 1, 3));
+  const prevSlide = () => setSlide(prev => Math.max(prev - 1, 0));
+
+  // SVG Arrow Helper
+  const ArrowAnnotation = ({ className, text }: { className: string, text: string }) => (
+    <div className={`absolute flex flex-col items-center ${className} z-20`}>
+      <div className="bg-yellow-300 text-slate-900 text-xs font-bold px-2 py-1 rounded shadow-lg mb-1 whitespace-nowrap border border-yellow-400">
+        {text}
+      </div>
+      <svg width="40" height="40" viewBox="0 0 40 40" className="fill-yellow-400 drop-shadow-md filter">
+        <path d="M20 0 L20 30 M10 20 L20 35 L30 20" stroke="currentColor" strokeWidth="4" fill="none" />
+      </svg>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-sm flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        
+        {/* Header */}
+        <div className="bg-green-600 p-4 text-white flex justify-between items-center">
+          <h2 className="text-xl font-bold"><i className="fas fa-book-open mr-2"></i> Quick Start Guide ({slide + 1}/4)</h2>
+          <button onClick={onClose} className="text-white/80 hover:text-white"><i className="fas fa-times text-2xl"></i></button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6 bg-slate-50 relative">
+          
+          {/* SLIDE 1: SETUP & VOICE */}
+          {slide === 0 && (
+            <div className="space-y-8 text-center">
+              <h3 className="text-2xl font-bold text-slate-800">1. Voice & Setup</h3>
+              <p className="text-slate-600 max-w-xl mx-auto">Use your voice to fill out forms quickly. The app uses AI to fix grammar and format your notes automatically.</p>
+              
+              <div className="relative max-w-md mx-auto bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg mt-8">
+                 {/* Mock Setup Input */}
+                 <label className="block text-left text-xs text-slate-400 mb-1">Tenant Name</label>
+                 <div className="flex gap-2">
+                    <div className="flex-1 bg-slate-900 border border-slate-600 rounded-lg p-3 text-slate-300 text-sm text-left">Jane Doe...</div>
+                    <button className="p-3 bg-red-500/20 border border-red-500 rounded-lg text-white">
+                       <MicActiveIcon />
+                    </button>
+                 </div>
+                 
+                 {/* Annotation */}
+                 <div className="absolute -right-24 top-8 hidden md:flex flex-row items-center">
+                    <svg width="60" height="20" className="rotate-180 mr-2 text-yellow-500"><path d="M0 10 L50 10 M40 0 L50 10 L40 20" stroke="currentColor" strokeWidth="3" fill="none"/></svg>
+                    <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm font-bold border border-yellow-300">Tap to Speak</span>
+                 </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto mt-8">
+                <div className="bg-white p-3 rounded-lg shadow text-center border">
+                  <div className="text-green-600 text-2xl mb-1"><i className="fas fa-map-marker-alt"></i></div>
+                  <div className="text-xs font-bold text-slate-700">Zip Code</div>
+                  <div className="text-[10px] text-slate-500">Auto-fills City/State</div>
+                </div>
+                <div className="bg-white p-3 rounded-lg shadow text-center border">
+                  <div className="text-blue-600 text-2xl mb-1"><i className="fas fa-calendar-alt"></i></div>
+                  <div className="text-xs font-bold text-slate-700">Year Built</div>
+                  <div className="text-[10px] text-slate-500">Alerts for Lead Paint</div>
+                </div>
+                <div className="bg-white p-3 rounded-lg shadow text-center border">
+                  <div className="text-purple-600 text-2xl mb-1"><i className="fas fa-building"></i></div>
+                  <div className="text-xs font-bold text-slate-700">Rooms</div>
+                  <div className="text-[10px] text-slate-500">Generates checklist</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SLIDE 2: INSPECTION ROW */}
+          {slide === 1 && (
+            <div className="space-y-6 text-center">
+              <h3 className="text-2xl font-bold text-slate-800">2. The Inspection Checklist</h3>
+              <p className="text-slate-600">Each item has controls for passing, failing, and adding evidence.</p>
+
+              {/* MOCK UI ROW */}
+              <div className="relative max-w-2xl mx-auto bg-white border border-slate-300 rounded-xl p-4 shadow-lg text-left mt-6">
+                 <div className="flex justify-between items-start mb-2">
+                    <span className="font-medium text-slate-700">1.5 Window Condition</span>
+                    <div className="flex space-x-1">
+                      <button className="px-2 py-1 text-xs font-bold rounded bg-slate-100 text-slate-400 border">24H</button>
+                      <button className="p-2 rounded-lg text-slate-300 bg-slate-50"><CheckIcon /></button>
+                      <button className="p-2 rounded-lg bg-red-100 text-red-600"><FailIcon /></button>
+                    </div>
+                 </div>
+                 {/* Annotations */}
+                 <ArrowAnnotation className="-top-8 right-40" text="Toggle 24-Hour Emergency" />
+                 <ArrowAnnotation className="-top-8 right-4" text="Pass / Fail" />
+
+                 <div className="relative mt-2">
+                    <div className="w-full p-2 bg-slate-900 rounded text-white text-sm min-h-[60px]">
+                       Broken glass pane...
+                    </div>
+                    <div className="absolute bottom-2 right-2 flex space-x-2">
+                       <button className="p-1.5 bg-slate-700 rounded text-white"><CameraIcon /></button>
+                       <button className="p-1.5 bg-slate-700 rounded text-yellow-400"><WandIcon /></button>
+                       <button className="p-1.5 bg-red-500 rounded text-white"><MicIcon /></button>
+                    </div>
+                    
+                    {/* Annotations */}
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 flex gap-4">
+                       <div className="flex flex-col items-center">
+                          <svg width="20" height="20" viewBox="0 0 20 20" className="text-slate-400 mb-1"><path d="M10 20 L10 0 L5 5 M10 0 L15 5" stroke="currentColor" fill="none"/></svg>
+                          <span className="text-xs font-bold bg-slate-200 px-2 rounded">Evidence</span>
+                       </div>
+                       <div className="flex flex-col items-center">
+                          <svg width="20" height="20" viewBox="0 0 20 20" className="text-slate-400 mb-1"><path d="M10 20 L10 0 L5 5 M10 0 L15 5" stroke="currentColor" fill="none"/></svg>
+                          <span className="text-xs font-bold bg-yellow-100 px-2 rounded">AI Fix</span>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+              <div className="text-sm text-slate-500 bg-blue-50 p-3 rounded-lg inline-block border border-blue-100">
+                 <i className="fas fa-lightbulb text-blue-500 mr-2"></i>
+                 <strong>Tip:</strong> Click the "Magic Wand" <WandIcon /> to have AI rewrite your rough notes into professional HQS language!
+              </div>
+            </div>
+          )}
+
+          {/* SLIDE 3: NAVIGATION */}
+          {slide === 2 && (
+            <div className="space-y-8 text-center">
+              <h3 className="text-2xl font-bold text-slate-800">3. Navigation & Location</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto items-center">
+                 <div className="bg-white p-4 rounded-xl shadow border border-slate-200 relative">
+                    <div className="text-left font-bold text-slate-600 mb-2 text-sm">Location Selector (Top of Card)</div>
+                    <div className="flex gap-2 text-xs">
+                       <div className="border rounded px-2 py-1 bg-blue-600 text-white">L</div>
+                       <div className="border rounded px-2 py-1">C</div>
+                       <div className="border rounded px-2 py-1">R</div>
+                       <span className="mx-1">/</span>
+                       <div className="border rounded px-2 py-1">F</div>
+                       <div className="border rounded px-2 py-1">C</div>
+                       <input className="w-10 bg-slate-900 text-white text-center rounded" value="2" readOnly />
+                    </div>
+                    <div className="mt-4 text-sm text-slate-600">
+                       Identify room position: <strong>Left/Right</strong> and <strong>Front/Rear</strong>.
+                    </div>
+                 </div>
+
+                 <div className="bg-white p-4 rounded-xl shadow border border-slate-200">
+                    <button className="w-full py-2 bg-slate-200 text-slate-700 font-bold rounded mb-2 flex items-center justify-center gap-2">
+                       <PlusIcon /> Add Bedroom
+                    </button>
+                    <div className="text-sm text-slate-600">
+                       Found an extra room? Tap "Add Bedroom" or "Add Bathroom" at the top of the list.
+                    </div>
+                 </div>
+              </div>
+
+              <div className="max-w-md mx-auto bg-slate-50 border border-slate-200 p-4 rounded-lg mt-6">
+                 <div className="flex justify-end">
+                    <button className="text-green-600 font-bold text-sm flex items-center gap-1 px-3 py-2 rounded bg-green-50 border border-green-200">
+                       <CheckIcon /> Pass Remaining Items
+                    </button>
+                 </div>
+                 <p className="text-xs text-slate-500 mt-2">
+                    Use this button at the bottom of a card to <strong>Pass</strong> all items you haven't marked as Fail. It won't overwrite your Fails!
+                 </p>
+              </div>
+            </div>
+          )}
+
+          {/* SLIDE 4: REPORTS */}
+          {slide === 3 && (
+             <div className="space-y-8 text-center">
+               <h3 className="text-2xl font-bold text-slate-800">4. Finishing Up</h3>
+               <div className="flex flex-col gap-4 max-w-sm mx-auto">
+                  <div className="bg-white p-4 rounded-xl shadow flex items-center gap-4 border-l-4 border-blue-600">
+                     <div className="bg-blue-100 p-3 rounded-full text-blue-600"><i className="fas fa-file-contract"></i></div>
+                     <div className="text-left">
+                        <div className="font-bold">Official HUD 52580</div>
+                        <div className="text-xs text-slate-500">Generates the exact government form.</div>
+                     </div>
+                  </div>
+                  
+                  <div className="bg-white p-4 rounded-xl shadow flex items-center gap-4 border-l-4 border-green-600">
+                     <div className="bg-green-100 p-3 rounded-full text-green-600"><i className="fas fa-file-pdf"></i></div>
+                     <div className="text-left">
+                        <div className="font-bold">Custom Report</div>
+                        <div className="text-xs text-slate-500">Includes photos and detailed AI notes.</div>
+                     </div>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-xl shadow flex items-center gap-4 border-l-4 border-slate-600">
+                     <div className="bg-slate-100 p-3 rounded-full text-slate-600"><i className="fas fa-redo"></i></div>
+                     <div className="text-left">
+                        <div className="font-bold">Start New Inspection</div>
+                        <div className="text-xs text-slate-500">Clears all data for the next house.</div>
+                     </div>
+                  </div>
+               </div>
+               
+               <div className="bg-yellow-50 p-4 rounded-lg max-w-lg mx-auto text-sm text-yellow-800 border border-yellow-200">
+                  <i className="fas fa-star mr-2"></i>
+                  <strong>Pro Tip:</strong> Don't forget to sign the digital signature pad on the Summary screen before generating reports!
+               </div>
+             </div>
+          )}
+
+        </div>
+
+        {/* Footer Nav */}
+        <div className="p-4 bg-slate-100 border-t border-slate-200 flex justify-between items-center">
+           <button 
+             onClick={prevSlide} 
+             disabled={slide === 0}
+             className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 ${slide === 0 ? 'text-slate-300' : 'text-slate-700 hover:bg-slate-200'}`}
+           >
+             <ArrowLeftIcon /> Previous
+           </button>
+           
+           <div className="flex gap-2">
+              {[0,1,2,3].map(i => (
+                 <div key={i} className={`w-2 h-2 rounded-full ${i === slide ? 'bg-green-600' : 'bg-slate-300'}`}></div>
+              ))}
+           </div>
+
+           {slide < 3 ? (
+             <button 
+               onClick={nextSlide}
+               className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold flex items-center gap-2 shadow"
+             >
+               Next <ArrowRightIcon />
+             </button>
+           ) : (
+             <button 
+               onClick={onClose}
+               className="px-6 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold flex items-center gap-2 shadow animate-pulse"
+             >
+               Get Started <CheckIcon />
+             </button>
+           )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const LocationSelector = ({ 
   location, 
@@ -282,32 +590,40 @@ const VoiceInput = ({
 
 export default function App() {
   const [step, setStep] = useState<'setup' | 'inspection' | 'summary'>('setup');
-  const [details, setDetails] = useState<UnitDetails>({
-    phaName: '',
-    tenantName: '',
-    tenantId: '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    unitType: 'S/F Detached',
-    yearBuilt: 1980,
-    bedrooms: 1,
-    bathrooms: 1,
-    inspectionDate: new Date().toISOString().split('T')[0],
-    inspectorName: ''
-  });
+  const [details, setDetails] = useState<UnitDetails>(INITIAL_DETAILS);
   const [sections, setSections] = useState<RoomSection[]>(INITIAL_SECTIONS);
   const [isListening, setIsListening] = useState(false);
   const [listeningTarget, setListeningTarget] = useState<string | null>(null); // ID of item being listened to
   const [generalNotes, setGeneralNotes] = useState('');
   const [generalPhotos, setGeneralPhotos] = useState<string[]>([]);
   const [signature, setSignature] = useState<string | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(true);
   
   // Camera ref - Defined once at top level
   const fileInputRef = useRef<HTMLInputElement>(null);
   const activePhotoTarget = useRef<{sectionId: string, itemId: string} | 'general' | null>(null);
   const recognitionRef = useRef<any>(null);
+
+  // --- RESET APP ---
+  const requestReset = () => {
+    setShowResetConfirm(true);
+  };
+
+  const confirmReset = () => {
+    stopSpeechRecognition();
+    setDetails(INITIAL_DETAILS);
+    // We use a deep copy of initial sections to ensure clean state
+    setSections(JSON.parse(JSON.stringify(INITIAL_SECTIONS)));
+    setGeneralNotes('');
+    setGeneralPhotos([]);
+    setSignature(null);
+    setIsListening(false);
+    setListeningTarget(null);
+    setStep('setup');
+    window.scrollTo(0, 0);
+    setShowResetConfirm(false);
+  };
 
   // --- SPEECH RECOGNITION HELPER ---
   const startSpeechRecognition = (
@@ -381,7 +697,8 @@ export default function App() {
 
   // --- INITIALIZATION LOGIC ---
   const startInspection = () => {
-    let newSections = [...INITIAL_SECTIONS];
+    // Deep copy INITIAL_SECTIONS to ensure no reference retention
+    let newSections = JSON.parse(JSON.stringify(INITIAL_SECTIONS));
 
     // 1. Handle Bedrooms (Logic: Studio = 0 bedrooms)
     const bedroomTemplates = [];
@@ -417,6 +734,7 @@ export default function App() {
     
     setSections(combinedSections);
     setStep('inspection');
+    window.scrollTo(0, 0);
   };
 
   // --- ADD ROOM DYNAMICALLY ---
@@ -923,11 +1241,20 @@ export default function App() {
 
   if (step === 'setup') {
     return (
-      <div className="min-h-screen bg-slate-900 text-white p-6 flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-slate-900 text-white p-6 flex flex-col items-center justify-center relative">
+        <TutorialOverlay isOpen={showTutorial} onClose={() => setShowTutorial(false)} />
+        
+        <button onClick={() => setShowTutorial(true)} className="absolute top-4 right-4 text-white hover:text-green-400 text-2xl">
+           <HelpIcon />
+        </button>
+
         <div className="w-full max-w-md space-y-6">
           <div className="text-center">
             <h1 className="text-3xl font-bold text-green-500 mb-2">Ceres Pacifica HQS Inspections</h1>
             <p className="text-slate-400">Voice-Enabled Inspection Assistant</p>
+            <button onClick={() => setShowTutorial(true)} className="mt-4 text-sm text-green-400 underline hover:text-green-300">
+               <i className="fas fa-book mr-1"></i> How to use this app
+            </button>
           </div>
 
           <div className="bg-slate-800 p-6 rounded-xl shadow-xl space-y-4">
@@ -1105,6 +1432,16 @@ export default function App() {
   // --- INSPECTION VIEW ---
   return (
     <div className="min-h-screen pb-20 bg-slate-100 text-slate-900">
+      <TutorialOverlay isOpen={showTutorial} onClose={() => setShowTutorial(false)} />
+      
+      <ConfirmationModal 
+        isOpen={showResetConfirm}
+        onConfirm={confirmReset}
+        onCancel={() => setShowResetConfirm(false)}
+        title="Restart Inspection?"
+        message="Are you sure you want to start a fresh inspection? All current data, including photos and signatures, will be permanently lost."
+      />
+
       {/* CAMERA INPUT (Hidden) */}
       <input
         type="file"
@@ -1117,10 +1454,24 @@ export default function App() {
 
       {/* HEADER */}
       <header className="bg-slate-900 text-white p-4 sticky top-0 z-10 shadow-md flex justify-between items-center">
-        <h1 className="font-bold text-lg truncate">Ceres HQS: {details.address}</h1>
+        <div className="flex items-center gap-3 overflow-hidden">
+           <h1 className="font-bold text-lg truncate">Ceres HQS: {details.address}</h1>
+           {/* RESTART BUTTON */}
+           <button 
+             onClick={requestReset}
+             className="text-slate-400 hover:text-white transition-colors"
+             title="Restart Inspection"
+           >
+             <RestartIcon />
+           </button>
+           {/* HELP BUTTON */}
+           <button onClick={() => setShowTutorial(true)} className="text-slate-400 hover:text-white transition-colors" title="Help / Tutorial">
+             <HelpIcon />
+           </button>
+        </div>
         <button 
           onClick={() => setStep(step === 'inspection' ? 'summary' : 'inspection')}
-          className="bg-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-500"
+          className="bg-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-500 flex-shrink-0"
         >
           {step === 'inspection' ? 'Summary' : 'Back to List'}
         </button>
@@ -1303,6 +1654,13 @@ export default function App() {
                 className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold flex items-center justify-center gap-2"
               >
                 <FilePdfIcon /> Generate Official HUD 52580
+              </button>
+              <div className="border-t border-slate-200 my-2"></div>
+              <button 
+                onClick={requestReset}
+                className="w-full py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold flex items-center justify-center gap-2"
+              >
+                <RestartIcon /> Finish & Start New Inspection
               </button>
             </div>
           </div>

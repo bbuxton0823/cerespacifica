@@ -603,6 +603,8 @@ export default function App() {
   const [generalNotes, setGeneralNotes] = useState('');
   const [generalPhotos, setGeneralPhotos] = useState<string[]>([]);
   const [signature, setSignature] = useState<string | null>(null);
+  const [secondSignature, setSecondSignature] = useState<string | null>(null);
+  const [secondSignerRole, setSecondSignerRole] = useState<'Tenant' | 'Owner' | 'Owner Representative'>('Tenant');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showTutorial, setShowTutorial] = useState(true);
   
@@ -624,6 +626,8 @@ export default function App() {
     setGeneralNotes('');
     setGeneralPhotos([]);
     setSignature(null);
+    setSecondSignature(null);
+    setSecondSignerRole('Tenant');
     setIsListening(false);
     setListeningTarget(null);
     setStep('setup');
@@ -1116,13 +1120,25 @@ export default function App() {
       }
     });
 
-    // Add Signature at bottom
+    // --- CERTIFICATIONS & SIGNATURES PAGE ---
+    doc.addPage();
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Certifications & Signatures", 14, 20);
+    
+    // Inspector
+    doc.setFontSize(10);
+    doc.text("Inspector Signature:", 14, 40);
     if (signature) {
-        doc.addPage();
-        doc.text("Certifications & Signatures", 14, 20);
-        doc.text("Inspector Signature:", 14, 40);
         doc.addImage(signature, 'PNG', 14, 45, 60, 30);
-        doc.text("Date: " + details.inspectionDate, 80, 60);
+    }
+    doc.text("Date: " + details.inspectionDate, 80, 60);
+
+    // Secondary (Tenant/Owner/Rep)
+    if (secondSignature) {
+        doc.text(`${secondSignerRole} Signature:`, 110, 40);
+        doc.addImage(secondSignature, 'PNG', 110, 45, 60, 30);
+        doc.text("Date: " + details.inspectionDate, 180, 60);
     }
 
     doc.save(`HUD-52580-${details.tenantName || 'Inspection'}.pdf`);
@@ -1268,12 +1284,22 @@ export default function App() {
     }
 
     // Signature on Custom Report
+    if (y > 240) doc.addPage();
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+    
+    let sigY = y + 20;
+    
+    // Inspector
     if (signature) {
-        if (y > 240) doc.addPage();
-        doc.setFontSize(12);
-        doc.setTextColor(0);
-        doc.text("Inspector Signature:", 20, y + 20);
-        doc.addImage(signature, 'PNG', 20, y + 25, 60, 30);
+        doc.text("Inspector Signature:", 20, sigY);
+        doc.addImage(signature, 'PNG', 20, sigY + 5, 60, 30);
+    }
+    
+    // Secondary
+    if (secondSignature) {
+        doc.text(`${secondSignerRole} Signature:`, 110, sigY);
+        doc.addImage(secondSignature, 'PNG', 110, sigY + 5, 60, 30);
     }
 
     doc.save(`HQS_Report_${details.tenantName.replace(/\s/g, '_')}.pdf`);
@@ -1717,10 +1743,32 @@ export default function App() {
               />
             </div>
 
-            {/* SIGNATURE PAD */}
+            {/* SIGNATURE PAD - INSPECTOR */}
             <div className="border-t pt-4">
               <label className="block text-sm font-medium mb-2">Inspector Signature</label>
               <SignaturePad onEnd={setSignature} />
+            </div>
+
+            {/* SIGNATURE PAD - SECONDARY */}
+            <div className="pt-4">
+               <label className="block text-sm font-medium mb-2">Additional Signature (Optional)</label>
+               <div className="flex gap-2 mb-2">
+                  {(['Tenant', 'Owner', 'Owner Representative'] as const).map(role => (
+                     <button
+                        key={role}
+                        onClick={() => setSecondSignerRole(role)}
+                        className={`px-3 py-1 text-sm rounded border ${
+                           secondSignerRole === role 
+                           ? 'bg-blue-600 text-white border-blue-600' 
+                           : 'bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200'
+                        }`}
+                     >
+                        {role}
+                     </button>
+                  ))}
+               </div>
+               <SignaturePad onEnd={setSecondSignature} />
+               <p className="text-xs text-slate-500 mt-1">Signing as: <strong>{secondSignerRole}</strong></p>
             </div>
 
             <div className="flex flex-col gap-3 pt-4">

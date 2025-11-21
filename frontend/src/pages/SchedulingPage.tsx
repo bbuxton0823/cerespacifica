@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar } from '../components/Calendar';
 import { addDays, format } from 'date-fns';
 import { apiClient } from '@/services/apiClient';
+import { MOCK_SCHEDULE_EVENTS } from '@/frontend/src/constants/mockSchedules';
 
 // Mock data type
 interface InspectionEvent {
@@ -95,28 +96,19 @@ export const SchedulingPage: React.FC = () => {
                     .map(mapScheduleToEvent)
                     .filter((event): event is InspectionEvent => Boolean(event));
 
-                if (normalized.length) {
-                    setEvents(normalized);
-                    setSyncError(null);
-                } else if (!events.length) {
-                    // Fallback seed data only if nothing loaded yet
-                    setEvents([
-                        { id: '1', title: 'Unit 101 - Annual', date: new Date(), type: 'Annual' },
-                        { id: '2', title: 'Unit 204 - Re-inspection', date: addDays(new Date(), 2), type: 'Reinspection' },
-                        { id: '3', title: 'Unit 305 - Biennial', date: addDays(new Date(), 5), type: 'Biennial' }
-                    ]);
-                }
+                    if (normalized.length) {
+                        setEvents(normalized);
+                        setSyncError(null);
+                    } else if (!events.length) {
+                        setEvents(MOCK_SCHEDULE_EVENTS);
+                    }
             } catch (error) {
                 if ((error as DOMException).name === 'AbortError') return;
-                console.error('Failed to sync schedules', error);
-                setSyncError('Unable to sync with backend. Showing cached sample data.');
-                if (!events.length) {
-                    setEvents([
-                        { id: '1', title: 'Unit 101 - Annual', date: new Date(), type: 'Annual' },
-                        { id: '2', title: 'Unit 204 - Re-inspection', date: addDays(new Date(), 2), type: 'Reinspection' },
-                        { id: '3', title: 'Unit 305 - Biennial', date: addDays(new Date(), 5), type: 'Biennial' },
-                    ]);
-                }
+                    console.error('Failed to sync schedules', error);
+                    setSyncError('Unable to sync with backend. Showing cached sample data.');
+                    if (!events.length) {
+                        setEvents(MOCK_SCHEDULE_EVENTS);
+                    }
             } finally {
                 setIsSyncing(false);
             }

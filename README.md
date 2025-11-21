@@ -2,6 +2,8 @@
 
 A comprehensive Progressive Web App (PWA) for Housing Quality Standards (HQS) inspections, designed to replicate and enhance the core functionalities of Happy Software's Housing Pro platform while providing modern AI-assisted features for Public Housing Agencies (PHAs).
 
+[Deployment Guide](./DEPLOY.md)
+
 ## 🏠 Overview
 
 The HQS App integrates the open-source [cerespacifica](https://github.com/bbuxton0823/cerespacifica) module as its foundation for field inspections, enhanced with enterprise-grade backend services for administration, scheduling, reporting, and HUD compliance.

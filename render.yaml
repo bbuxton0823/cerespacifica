@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: hqs-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm run db:migrate && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    databases:
+      - name: hqs-db
+        plan: free
+
+databases:
+  - name: hqs-db
+    databaseName: hqs_db
+    user: hqs_user
+    plan: free

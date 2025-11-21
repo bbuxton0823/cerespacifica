@@ -24,6 +24,7 @@ interface Event {
     title: string;
     date: Date;
     type: 'Annual' | 'Biennial' | 'Triennial' | 'Reinspection';
+    color?: string;
 }
 
 interface CalendarProps {
@@ -122,11 +123,12 @@ export const Calendar: React.FC<CalendarProps> = ({ events = [], onDateClick, on
                                         onClick={(e) => { e.stopPropagation(); onEventClick?.(event); }}
                                         className={cn(
                                             "text-xs px-2 py-1 rounded-md truncate shadow-sm border border-transparent transition-all hover:scale-[1.02]",
-                                            event.type === 'Annual' && "bg-blue-50 text-blue-700 border-blue-100",
-                                            event.type === 'Biennial' && "bg-indigo-50 text-indigo-700 border-indigo-100",
-                                            event.type === 'Triennial' && "bg-purple-50 text-purple-700 border-purple-100",
-                                            event.type === 'Reinspection' && "bg-amber-50 text-amber-700 border-amber-100"
+                                            !event.color && event.type === 'Annual' && "bg-blue-50 text-blue-700 border-blue-100",
+                                            !event.color && event.type === 'Biennial' && "bg-indigo-50 text-indigo-700 border-indigo-100",
+                                            !event.color && event.type === 'Triennial' && "bg-purple-50 text-purple-700 border-purple-100",
+                                            !event.color && event.type === 'Reinspection' && "bg-amber-50 text-amber-700 border-amber-100"
                                         )}
+                                        style={event.color ? { backgroundColor: `${event.color}20`, color: event.color, borderColor: `${event.color}40` } : {}}
                                     >
                                         <span className="font-medium mr-1">•</span>
                                         {event.title}

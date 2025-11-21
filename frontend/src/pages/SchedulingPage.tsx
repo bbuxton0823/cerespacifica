@@ -8,18 +8,43 @@ interface InspectionEvent {
     title: string;
     date: Date;
     type: 'Annual' | 'Biennial' | 'Triennial' | 'Reinspection';
+    color?: string;
 }
 
 export const SchedulingPage: React.FC = () => {
     const [events, setEvents] = useState<InspectionEvent[]>([]);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
     const [newEvent, setNewEvent] = useState({
         unit: '',
         type: 'Annual',
         date: format(new Date(), 'yyyy-MM-dd'),
         time: '10:00'
     });
+
+    const handleImport = () => {
+        setIsImporting(true);
+        setTimeout(() => {
+            setIsImporting(false);
+            alert("Schedule Imported Successfully! (Mock)");
+            // Add mock imported events
+            setEvents(prev => [
+                ...prev,
+                { id: '4', title: 'Unit 505 - Annual', date: addDays(new Date(), 1), type: 'Annual' },
+                { id: '5', title: 'Unit 606 - Annual', date: addDays(new Date(), 1), type: 'Annual' }
+            ]);
+        }, 1500);
+    };
+
+    const handleAutoRoute = () => {
+        alert("Auto-Routing based on ZIP Code and Date... (Mock)");
+        // Mock color assignment
+        setEvents(prev => prev.map((e, i) => ({
+            ...e,
+            color: i % 2 === 0 ? '#3b82f6' : '#ef4444' // Blue or Red
+        })));
+    };
 
     // Mock fetching data
     useEffect(() => {
@@ -76,8 +101,20 @@ export const SchedulingPage: React.FC = () => {
                     <p className="text-sm text-slate-500">Manage inspection appointments and compliance deadlines</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm transition-all">
-                        Sync Calendar
+                    <button
+                        onClick={handleImport}
+                        disabled={isImporting}
+                        className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm transition-all flex items-center gap-2"
+                    >
+                        {isImporting ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-file-upload"></i>}
+                        Import
+                    </button>
+                    <button
+                        onClick={handleAutoRoute}
+                        className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm transition-all flex items-center gap-2"
+                    >
+                        <i className="fas fa-route"></i>
+                        Auto-Route
                     </button>
                     <button
                         onClick={() => setIsModalOpen(true)}

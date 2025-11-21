@@ -4,6 +4,63 @@ import { addDays, addYears, format } from 'date-fns';
 
 export class SchedulingService {
     /**
+     * Auto-route inspections to inspectors
+     * @param {string} agencyId 
+     * @param {Date} startDate 
+     * @param {Date} endDate 
+     */
+    async autoRoute(agencyId, startDate, endDate) {
+        // 1. Get unassigned scheduled inspections in range
+        const inspections = await db('inspections')
+            .join('units', 'inspections.unit_id', 'units.id')
+            .where('inspections.agency_id', agencyId)
+            .where('inspections.status', 'Scheduled')
+            .whereNull('inspections.inspector_id')
+            .whereBetween('inspections.scheduled_date', [startDate, endDate])
+            .select('inspections.*', 'units.zip_code');
+
+        // 2. Get Inspectors
+        const inspectors = await db('users')
+            .where({ agency_id: agencyId, role: 'Inspector' });
+
+        if (inspectors.length === 0) return { error: 'No inspectors available' };
+
+        // 3. Group by Date and Zip
+        const grouped = inspections.reduce((acc, insp) => {
+            const dateKey = new Date(insp.scheduled_date).toISOString().split('T')[0];
+            if (!acc[dateKey]) acc[dateKey] = {};
+
+            const zip = insp.zip_code || 'UNKNOWN';
+            if (!acc[dateKey][zip]) acc[dateKey][zip] = [];
+
+            acc[dateKey][zip].push(insp);
+            return acc;
+        }, {});
+
+        // 4. Assign (Simple Round Robin per Zip Cluster)
+        let assignments = 0;
+        let inspectorIdx = 0;
+
+        await db.transaction(async (trx) => {
+            for (const dateKey in grouped) {
+                for (const zip in grouped[dateKey]) {
+                    const cluster = grouped[dateKey][zip];
+                    const inspector = inspectors[inspectorIdx % inspectors.length];
+
+                    for (const insp of cluster) {
+                        await trx('inspections')
+                            .where({ id: insp.id })
+                            .update({ inspector_id: inspector.id });
+                        assignments++;
+                    }
+                    inspectorIdx++;
+                }
+            }
+        });
+
+        return { assignments, message: `Successfully assigned ${assignments} inspections.` };
+    }
+    /**
      * Schedule an inspection for a unit
      */
     async scheduleInspection(unitId, type, date, inspectorId, agencyId) {

@@ -34,6 +34,7 @@ export interface RoomSection {
 
 export interface UnitDetails {
   phaName: string;
+  tCode: string; // HUD T-Code
   inspectionType: 'Initial' | 'Annual' | 'Reinspection' | 'Special'; // Added Inspection Type
   tenantName: string;
   tenantId: string;

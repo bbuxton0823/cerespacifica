@@ -10,11 +10,15 @@
   },
   "dependencies": {
     "@google/genai": "^1.30.0",
-    "react-dom": "^19.2.0",
-    "react": "^19.2.0",
-    "jspdf-autotable": "^5.0.2",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "jspdf": "^3.0.3",
-    "pdf-lib": "1.17.1"
+    "jspdf-autotable": "^5.0.2",
+    "pdf-lib": "1.17.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.6",
+    "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

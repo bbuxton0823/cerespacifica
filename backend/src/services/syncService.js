@@ -99,8 +99,8 @@ export class SyncService {
 
     let result;
     
-    switch (action) {
-      case 'create':
+      switch (action) {
+        case 'create':
         result = await trx('inspections').insert({
           ...data,
           inspector_id: userId,
@@ -119,7 +119,7 @@ export class SyncService {
         await this.check24HourFails(trx, result[0].id, data.data);
         break;
 
-      case 'update':
+        case 'update': {
         // Check for conflicts
         const existing = await trx('inspections')
           .where('id', data.id)
@@ -160,6 +160,7 @@ export class SyncService {
         // Re-check for 24-hour emergency fails
         await this.check24HourFails(trx, data.id, data.data);
         break;
+        }
 
       case 'delete':
         result = await trx('inspections')

@@ -1828,6 +1828,12 @@ export default function App() {
               >
                 <FilePdfIcon /> Generate Official HUD 52580
               </button>
+              <button
+                onClick={() => alert("Syncing results to cloud... (Mock)")}
+                className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold flex items-center justify-center gap-2"
+              >
+                <i className="fas fa-cloud-upload-alt"></i> Sync to Cloud
+              </button>
               <div className="border-t border-slate-200 my-2"></div>
               <button
                 onClick={requestReset}

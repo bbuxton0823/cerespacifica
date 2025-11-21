@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar } from '../components/Calendar';
 import { addDays, format } from 'date-fns';
+import { apiClient } from '@/services/apiClient';
 
 // Mock data type
 interface InspectionEvent {
@@ -16,6 +17,8 @@ export const SchedulingPage: React.FC = () => {
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [syncError, setSyncError] = useState<string | null>(null);
     const [newEvent, setNewEvent] = useState({
         unit: '',
         type: 'Annual',
@@ -46,16 +49,86 @@ export const SchedulingPage: React.FC = () => {
         })));
     };
 
-    // Mock fetching data
-    useEffect(() => {
-        // Simulate API call
-        const mockEvents: InspectionEvent[] = [
-            { id: '1', title: 'Unit 101 - Annual', date: new Date(), type: 'Annual' },
-            { id: '2', title: 'Unit 204 - Re-inspection', date: addDays(new Date(), 2), type: 'Reinspection' },
-            { id: '3', title: 'Unit 305 - Biennial', date: addDays(new Date(), 5), type: 'Biennial' },
-        ];
-        setEvents(mockEvents);
+    const mapScheduleToEvent = useCallback((schedule: any): InspectionEvent | null => {
+        if (!schedule) return null;
+        const scheduledDate = schedule.scheduled_date || new Date().toISOString().split('T')[0];
+        const scheduledTime = schedule.scheduled_time || '09:00';
+        const date = new Date(`${scheduledDate}T${scheduledTime}`);
+
+        if (Number.isNaN(date.getTime())) return null;
+
+        const inspectionType = (schedule.inspection_type || 'Annual') as InspectionEvent['type'];
+        const titleParts = [
+            schedule.address || 'Inspection',
+            schedule.tenant_name ? `- ${schedule.tenant_name}` : '',
+            schedule.inspection_type ? `(${schedule.inspection_type})` : ''
+        ].filter(Boolean);
+
+        const color = (() => {
+            switch (schedule.status) {
+                case 'completed':
+                    return '#22c55e';
+                case 'in_progress':
+                    return '#f97316';
+                case 'cancelled':
+                    return '#ef4444';
+                default:
+                    return undefined;
+            }
+        })();
+
+        return {
+            id: schedule.id,
+            title: titleParts.join(' ').trim() || `Inspection ${schedule.id}`,
+            date,
+            type: inspectionType,
+            color
+        };
     }, []);
+
+    const hydrateSchedulesFromApi = useCallback(
+        async (signal?: AbortSignal) => {
+            setIsSyncing(true);
+            try {
+                const data = await apiClient.get<{ schedules: any[] }>('/schedules?limit=200', { signal });
+                const normalized = (data?.schedules || [])
+                    .map(mapScheduleToEvent)
+                    .filter((event): event is InspectionEvent => Boolean(event));
+
+                if (normalized.length) {
+                    setEvents(normalized);
+                    setSyncError(null);
+                } else if (!events.length) {
+                    // Fallback seed data only if nothing loaded yet
+                    setEvents([
+                        { id: '1', title: 'Unit 101 - Annual', date: new Date(), type: 'Annual' },
+                        { id: '2', title: 'Unit 204 - Re-inspection', date: addDays(new Date(), 2), type: 'Reinspection' },
+                        { id: '3', title: 'Unit 305 - Biennial', date: addDays(new Date(), 5), type: 'Biennial' }
+                    ]);
+                }
+            } catch (error) {
+                if ((error as DOMException).name === 'AbortError') return;
+                console.error('Failed to sync schedules', error);
+                setSyncError('Unable to sync with backend. Showing cached sample data.');
+                if (!events.length) {
+                    setEvents([
+                        { id: '1', title: 'Unit 101 - Annual', date: new Date(), type: 'Annual' },
+                        { id: '2', title: 'Unit 204 - Re-inspection', date: addDays(new Date(), 2), type: 'Reinspection' },
+                        { id: '3', title: 'Unit 305 - Biennial', date: addDays(new Date(), 5), type: 'Biennial' },
+                    ]);
+                }
+            } finally {
+                setIsSyncing(false);
+            }
+        },
+        [events.length, mapScheduleToEvent]
+    );
+
+    useEffect(() => {
+        const controller = new AbortController();
+        hydrateSchedulesFromApi(controller.signal);
+        return () => controller.abort();
+    }, [hydrateSchedulesFromApi]);
 
     const handleDateClick = (date: Date) => {
         setSelectedDate(date);
@@ -98,9 +171,25 @@ export const SchedulingPage: React.FC = () => {
             <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center z-10">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Scheduling</h1>
-                    <p className="text-sm text-slate-500">Manage inspection appointments and compliance deadlines</p>
+                        <p className="text-sm text-slate-500 flex items-center gap-2">
+                            Manage inspection appointments and compliance deadlines
+                            {isSyncing && <span className="text-xs text-blue-500">Syncing…</span>}
+                        </p>
+                        {syncError && (
+                            <p className="text-xs text-red-500 mt-1">
+                                {syncError}
+                            </p>
+                        )}
                 </div>
                 <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => hydrateSchedulesFromApi()}
+                            disabled={isSyncing}
+                            className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
+                        >
+                            {isSyncing ? <i className="fas fa-spinner fa-spin" /> : <i className="fas fa-rotate" />}
+                            Sync
+                        </button>
                     <button
                         onClick={handleImport}
                         disabled={isImporting}

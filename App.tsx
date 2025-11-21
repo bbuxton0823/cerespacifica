@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import InspectionApp from '@/frontend/src/pages/InspectionApp';
 import { SchedulingPage } from '@/frontend/src/pages/SchedulingPage';
+import { SettingsPage } from '@/frontend/src/pages/SettingsPage';
 
 const NavLink = ({ to, icon, label }: { to: string, icon: string, label: string }) => {
     const location = useLocation();
@@ -45,7 +46,7 @@ export default function App() {
                     <Route path="/" element={<InspectionApp />} />
                     <Route path="/scheduling" element={<SchedulingPage />} />
                     <Route path="/history" element={<div className="p-10 text-center text-slate-500">History Coming Soon</div>} />
-                    <Route path="/settings" element={<div className="p-10 text-center text-slate-500">Settings Coming Soon</div>} />
+                    <Route path="/settings" element={<SettingsPage />} />
                 </Routes>
             </Layout>
         </Router>

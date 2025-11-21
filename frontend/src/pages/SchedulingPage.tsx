@@ -117,6 +117,13 @@ export const SchedulingPage: React.FC = () => {
                         Auto-Route
                     </button>
                     <button
+                        onClick={() => alert("Generating Letters for Tenant and Landlord... (Mock)")}
+                        className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm transition-all flex items-center gap-2"
+                    >
+                        <i className="fas fa-envelope-open-text"></i>
+                        Letters
+                    </button>
+                    <button
                         onClick={() => setIsModalOpen(true)}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 shadow-sm shadow-blue-200 transition-all flex items-center gap-2"
                     >

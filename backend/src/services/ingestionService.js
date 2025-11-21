@@ -30,6 +30,11 @@ export class IngestionService {
                         city: row['City'] || '',
                         zip_code: row['Zip'] || row['Zip Code'] || '',
                         t_code: row['T-Code'] || row['TCode'] || null,
+                        tenant_name: row['Tenant Name'] || row['Client Name'] || '',
+                        tenant_phone: row['Phone'] || row['Tenant Phone'] || '',
+                        landlord_name: row['Landlord Name'] || '',
+                        landlord_address: row['Landlord Address'] || '',
+                        property_info: row['Property Info'] || row['Type'] || '',
                         agency_id: agencyId
                     };
 
@@ -55,25 +60,47 @@ export class IngestionService {
                         }).returning('*');
                         unit = newUnit;
                     } else {
-                        // Update T-Code if present
-                        if (unitData.t_code) {
-                            await trx('units')
-                                .where({ id: unit.id })
-                                .update({ t_code: unitData.t_code, updated_at: new Date() });
+                        // Update Unit Info
+                        await trx('units')
+                            .where({ id: unit.id })
+                            .update({
+                                ...unitData,
+                                updated_at: new Date()
+                            });
+                    }
+
+                    // 3. Compliance Logic: Calculate Next Inspection
+                    let inspectionDate;
+                    const lastInspectionRaw = row['Last Inspection Date'] || row['Last Inspection'];
+
+                    if (lastInspectionRaw) {
+                        let lastDate;
+                        if (typeof lastInspectionRaw === 'number') {
+                            lastDate = new Date((lastInspectionRaw - (25567 + 2)) * 86400 * 1000);
+                        } else {
+                            lastDate = new Date(lastInspectionRaw);
+                        }
+
+                        // Determine Frequency (Default to Annual if not specified or T-Code logic)
+                        // Simple logic: If Biennial/Triennial specified in row, use that. Else Annual.
+                        const freq = row['Frequency'] || 'Annual';
+                        const monthsToAdd = freq === 'Biennial' ? 24 : freq === 'Triennial' ? 36 : 12;
+
+                        inspectionDate = new Date(lastDate);
+                        inspectionDate.setMonth(inspectionDate.getMonth() + monthsToAdd);
+                    } else {
+                        // Fallback: If explicit date provided
+                        const explicitDate = row['Inspection Date'] || row['Date'];
+                        if (explicitDate) {
+                            if (typeof explicitDate === 'number') {
+                                inspectionDate = new Date((explicitDate - (25567 + 2)) * 86400 * 1000);
+                            } else {
+                                inspectionDate = new Date(explicitDate);
+                            }
                         }
                     }
 
-                    // 3. Schedule Inspection if Date provided
-                    const inspectionDateRaw = row['Inspection Date'] || row['Date'];
-                    if (inspectionDateRaw) {
-                        // Handle Excel dates or string dates
-                        let inspectionDate;
-                        if (typeof inspectionDateRaw === 'number') {
-                            inspectionDate = new Date((inspectionDateRaw - (25567 + 2)) * 86400 * 1000);
-                        } else {
-                            inspectionDate = new Date(inspectionDateRaw);
-                        }
-
+                    if (inspectionDate) {
                         // Check if already scheduled
                         const existing = await trx('inspections')
                             .where({ unit_id: unit.id, scheduled_date: inspectionDate })

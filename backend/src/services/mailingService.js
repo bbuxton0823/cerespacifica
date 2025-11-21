@@ -3,6 +3,128 @@ import { logger } from '../utils/logger.js';
 
 export class MailingService {
     /**
+     * Merge data into a template
+     * @param {string} template 
+     * @param {object} data 
+     */
+    mergeTemplate(template, data) {
+        return template.replace(/{{(\w+)}}/g, (match, key) => {
+            return data[key] || '';
+        });
+    }
+
+    /**
+     * Generate letters for a batch of inspections
+     * @param {string[]} inspectionIds 
+     */
+    async generateBatch(inspectionIds) {
+        const inspections = await db('inspections')
+            .join('units', 'inspections.unit_id', 'units.id')
+            .join('agencies', 'inspections.agency_id', 'agencies.id')
+            .whereIn('inspections.id', inspectionIds)
+            .select('inspections.*', 'units.address', 'units.city', 'units.zip_code',
+                'units.tenant_name', 'units.landlord_name', 'units.landlord_address',
+                'agencies.name as agency_name', 'agencies.address as agency_address', 'agencies.phone as agency_phone');
+
+        const generated = [];
+
+        // Date for letter
+        const dateToday = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+        // Dynamic Templates
+        const tenantTemplate = `
+{{agency_name}}
+{{agency_address}}
+
+${dateToday}
+
+{{tenant_name}}
+{{address}}
+{{city}}, {{zip_code}}
+
+Dear {{tenant_name}}
+
+Our agency has scheduled an inspection of your unit located at:
+
+{{address}}
+{{city}}, {{zip_code}}
+
+The inspection has been scheduled as part of our Housing Quality Standards Inspection process.
+
+The inspection will be conducted on {{scheduled_date}} between 9:00 AM and 3:00 PM.
+
+Please take time before the inspection to ensure that all necessary repairs are made and that all smoke detectors are in place and working.
+
+If you have any questions concerning your inspection, please contact us at {{agency_phone}}.
+
+Sincerely,
+
+{{agency_name}}
+
+
+CC: {{landlord_name}}
+{{landlord_address}}
+`;
+
+        const landlordTemplate = `
+{{agency_name}}
+{{agency_address}}
+
+${dateToday}
+
+{{landlord_name}}
+{{landlord_address}}
+
+Dear {{landlord_name}}
+
+Our agency has scheduled an inspection of your property located at:
+
+{{address}}
+{{city}}, {{zip_code}}
+
+Tenant: {{tenant_name}}
+
+The inspection has been scheduled as part of our Housing Quality Standards Inspection process.
+
+The inspection will be conducted on {{scheduled_date}} between 9:00 AM and 3:00 PM.
+
+Please ensure access is available.
+
+If you have any questions concerning your inspection, please contact us at {{agency_phone}}.
+
+Sincerely,
+
+{{agency_name}}
+`;
+
+        for (const insp of inspections) {
+            const data = {
+                ...insp,
+                scheduled_date: new Date(insp.scheduled_date).toLocaleDateString()
+            };
+
+            // Generate Tenant Letter
+            generated.push({
+                type: 'Tenant Notice',
+                recipient: insp.tenant_name,
+                address: insp.address,
+                content: this.mergeTemplate(tenantTemplate, data)
+            });
+
+            // Generate Landlord Letter
+            generated.push({
+                type: 'Landlord Notice',
+                recipient: insp.landlord_name,
+                address: insp.landlord_address,
+                content: this.mergeTemplate(landlordTemplate, data)
+            });
+        }
+
+        // In a real app, we would send these to a print API (Lob/Click2Mail) here.
+        // For now, we return the generated content.
+        return generated;
+    }
+    /**
      * Generate a notification for an inspection
      */
     async generateNotice(inspectionId, type) {

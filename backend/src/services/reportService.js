@@ -2,6 +2,7 @@ import PDFDocument from 'pdfkit';
 import * as XLSX from 'xlsx';
 import db from '../config/database.js';
 import { logger } from '../utils/logger.js';
+import { securityService } from './securityService.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -37,8 +38,8 @@ export class ReportService {
             doc.fontSize(14).text('1. General Information');
             doc.fontSize(10);
             doc.text(`Unit Address: ${inspection.address}, ${inspection.city}, ${inspection.zip_code}`);
-            doc.text(`Tenant Name: ${inspection.tenant_name}`);
-            doc.text(`Landlord Name: ${inspection.landlord_name}`);
+            doc.text(`Tenant Name: ${securityService.decrypt(inspection.tenant_name)}`);
+            doc.text(`Landlord Name: ${securityService.decrypt(inspection.landlord_name)}`);
             doc.text(`PHA: ${inspection.agency_name}`);
             doc.text(`Inspection Date: ${new Date(inspection.scheduled_date).toLocaleDateString()}`);
             doc.text(`Type: ${inspection.type}`);

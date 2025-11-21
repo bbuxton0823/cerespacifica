@@ -1,6 +1,9 @@
 import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../config/database.js';
+import { logger } from '../utils/logger.js';
+import { securityService } from './securityService.js';
+import { auditService } from './auditService.js';
 
 export class IngestionService {
     /**
@@ -30,9 +33,9 @@ export class IngestionService {
                         city: row['City'] || '',
                         zip_code: row['Zip'] || row['Zip Code'] || '',
                         t_code: row['T-Code'] || row['TCode'] || null,
-                        tenant_name: row['Tenant Name'] || row['Client Name'] || '',
-                        tenant_phone: row['Phone'] || row['Tenant Phone'] || '',
-                        landlord_name: row['Landlord Name'] || '',
+                        tenant_name: securityService.encrypt(row['Tenant Name'] || row['Client Name'] || ''),
+                        tenant_phone: securityService.encrypt(row['Phone'] || row['Tenant Phone'] || ''),
+                        landlord_name: securityService.encrypt(row['Landlord Name'] || ''),
                         landlord_address: row['Landlord Address'] || '',
                         property_info: row['Property Info'] || row['Type'] || '',
                         agency_id: agencyId

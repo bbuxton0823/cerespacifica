@@ -1,36 +1,90 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
-import { InspectionData, InspectionStatus } from '../types';
+import { InspectionStatus } from '../types';
 
-const getAi = () => {
-  if (!process.env.API_KEY) {
-    console.error("API Key missing");
-    return null;
+type GenAiModule = typeof import('@google/genai');
+type GoogleGenAIClient = InstanceType<GenAiModule['GoogleGenAI']>;
+
+const AI_PROXY_URL = import.meta.env.VITE_AI_PROXY_URL || '/api/ai/voice-command';
+const AI_PROXY_KEY = import.meta.env.VITE_AI_PROXY_KEY || '';
+const FRONTEND_GEMINI_API_KEY =
+  import.meta.env.VITE_GEMINI_API_KEY ||
+  import.meta.env.VITE_API_KEY ||
+  '';
+
+let genAiModulePromise: Promise<GenAiModule> | null = null;
+const loadGenAiModule = () => {
+  if (!genAiModulePromise) {
+    genAiModulePromise = import('@google/genai');
   }
-  return new GoogleGenAI({ apiKey: process.env.API_KEY });
+  return genAiModulePromise;
 };
 
-export const processVoiceCommand = async (
-  transcript: string, 
-  currentSections: any[]
-): Promise<{
-  sectionId: string | null;
-  itemId: string | null;
-  status: InspectionStatus | null;
-  comment: string | null;
-  is24Hour: boolean;
-  responsibility: 'owner' | 'tenant' | null;
-  success: boolean;
-}> => {
-  const ai = getAi();
-  if (!ai) return { success: false, sectionId: null, itemId: null, status: null, comment: null, is24Hour: false, responsibility: 'owner' };
+let cachedAiClient: GoogleGenAIClient | null = null;
 
-  // Map sections including item status for context awareness (crucial for 24h fail logic)
-  const contextMap = currentSections.map(s => ({
+const getAi = async () => {
+  if (!FRONTEND_GEMINI_API_KEY) {
+    console.error('Missing VITE_GEMINI_API_KEY for fallback AI processing');
+    return null;
+  }
+  if (cachedAiClient) return cachedAiClient;
+  const { GoogleGenAI } = await loadGenAiModule();
+  cachedAiClient = new GoogleGenAI({ apiKey: FRONTEND_GEMINI_API_KEY });
+  return cachedAiClient;
+};
+
+const mapStatus = (status?: string | null): InspectionStatus | null => {
+  if (!status) return InspectionStatus.PENDING;
+  const normalized = status.toUpperCase();
+  if (normalized === 'PASS') return InspectionStatus.PASS;
+  if (normalized === 'FAIL') return InspectionStatus.FAIL;
+  if (normalized === 'N/A' || normalized === 'NOT_APPLICABLE') {
+    return InspectionStatus.NOT_APPLICABLE;
+  }
+  if (normalized === 'INCONCLUSIVE') return InspectionStatus.INCONCLUSIVE;
+  return InspectionStatus.PENDING;
+};
+
+const buildProxyHeaders = () => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
+
+  const token = typeof window !== 'undefined' ? localStorage.getItem('hqs_token') : null;
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  if (AI_PROXY_KEY) {
+    headers['x-api-key'] = AI_PROXY_KEY;
+  }
+  return headers;
+};
+
+const callProxy = async (transcript: string, sections: any[]) => {
+  const response = await fetch(AI_PROXY_URL, {
+    method: 'POST',
+    headers: buildProxyHeaders(),
+    body: JSON.stringify({ transcript, sections })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`AI proxy error: ${response.status} ${errorText}`);
+  }
+
+  return response.json();
+};
+
+const callGeminiDirect = async (transcript: string, sections: any[]) => {
+  const ai = await getAi();
+  if (!ai) {
+    throw new Error('Gemini client not configured');
+  }
+
+  const contextMap = sections.map((s: any) => ({
     id: s.id,
     title: s.title,
-    items: s.items.map((i: any) => ({ 
-      id: i.id, 
+    items: s.items.map((i: any) => ({
+      id: i.id,
       label: i.label,
       status: i.status
     }))
@@ -41,72 +95,90 @@ export const processVoiceCommand = async (
     The user is speaking an observation or providing a note.
 
     Current Form Structure & Status:
-    ${JSON.stringify(contextMap).substring(0, 15000)} 
+    ${JSON.stringify(contextMap).substring(0, 15000)}
 
     User Input: "${transcript}"
 
     Your Tasks:
     1. Identify the most relevant Section ID and Item ID.
     2. Determine the status: PASS, FAIL, INCONCLUSIVE, or N/A.
-    3. **Summarize the input into professional HQS short-form language.** 
-       - Example: "The window glass is broken" -> "Severe window deterioration; broken glass hazard."
-    4. **Determine if this is a 24-Hour Fail** based on these STRICT rules:
-       - **24-Hour Fails Include:**
-         - No electricity (Unit-wide)
-         - No running water (Unit-wide)
-         - Electrical hazards (open plugs, exposed wires, frayed cords)
-         - Security broken (exterior doors unlockable, accessible windows broken)
-         - Serious cut hazards (broken glass)
-         - No working toilet in unit (CRITICAL DISTINCTION: A toilet that is leaking or running is a regular FAIL, but is NOT "broken" for 24-hour purposes. A toilet is only considered "Not Working" if it is INOPERABLE/WILL NOT FLUSH. Logic: If the toilet is inoperable AND no other toilets in the unit are marked PASS, it is a 24-hour fail. If it is just leaking, it is NOT a 24-hour fail).
-         - No working Smoke Detector (Check context: If OTHER smoke detectors are PASS, this is NOT 24-hour. If this is the only one, mark as 24-hour).
-         - No working CO Detector (Check context: If OTHER CO detectors are PASS, this is NOT 24-hour).
-    5. **Determine Responsibility:** If the user mentions "tenant damage", "tenant's fault", or similar, set responsibility to 'tenant'. Otherwise, default to 'owner'.
-    
-    Return JSON only.
+    3. Summarize the input into professional HQS short-form language (<= 220 characters).
+    4. Determine if this is a 24-Hour Fail.
+    5. Determine Responsibility (owner vs tenant). Default owner.
+
+    Return JSON only with keys:
+    sectionId, itemId, status, comment, is24Hour, responsibility
   `;
 
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            sectionId: { type: Type.STRING },
-            itemId: { type: Type.STRING },
-            status: { type: Type.STRING },
-            comment: { type: Type.STRING },
-            is24Hour: { type: Type.BOOLEAN },
-            responsibility: { type: Type.STRING, enum: ['owner', 'tenant'] }
-          }
+  const { Type } = await loadGenAiModule();
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: prompt,
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          sectionId: { type: Type.STRING },
+          itemId: { type: Type.STRING },
+          status: { type: Type.STRING },
+          comment: { type: Type.STRING },
+          is24Hour: { type: Type.BOOLEAN },
+          responsibility: { type: Type.STRING, enum: ['owner', 'tenant'] }
         }
       }
-    });
+    }
+  });
 
-    const text = response.text;
-    if (!text) throw new Error("No text returned");
-    
-    const result = JSON.parse(text);
-    
-    let statusEnum = InspectionStatus.PENDING;
-    if (result.status?.toUpperCase() === 'PASS') statusEnum = InspectionStatus.PASS;
-    if (result.status?.toUpperCase() === 'FAIL') statusEnum = InspectionStatus.FAIL;
-    if (result.status?.toUpperCase() === 'N/A') statusEnum = InspectionStatus.NOT_APPLICABLE;
-    
-    return {
-      success: true,
-      sectionId: result.sectionId || null,
-      itemId: result.itemId || null,
-      status: statusEnum,
-      comment: result.comment || transcript,
-      is24Hour: result.is24Hour || false,
-      responsibility: (result.responsibility as 'owner' | 'tenant') || 'owner'
-    };
+  const text = response.text;
+  if (!text) {
+    throw new Error('Gemini returned empty response');
+  }
 
+  return JSON.parse(text);
+};
+
+const normalizeResult = (
+  result: any,
+  transcript: string
+): {
+  sectionId: string | null;
+  itemId: string | null;
+  status: InspectionStatus | null;
+  comment: string | null;
+  is24Hour: boolean;
+  responsibility: 'owner' | 'tenant' | null;
+  success: boolean;
+} => ({
+  success: true,
+  sectionId: result.sectionId || null,
+  itemId: result.itemId || null,
+  status: mapStatus(result.status),
+  comment: result.comment || transcript,
+  is24Hour: Boolean(result.is24Hour),
+  responsibility: result.responsibility === 'tenant' ? 'tenant' : 'owner'
+});
+
+export const processVoiceCommand = async (
+  transcript: string,
+  currentSections: any[]
+) => {
+  // Try proxy first
+  if (AI_PROXY_URL) {
+    try {
+      const proxyResult = await callProxy(transcript, currentSections);
+      return normalizeResult(proxyResult, transcript);
+    } catch (proxyError) {
+      console.warn('AI proxy failed, falling back to local Gemini:', proxyError);
+    }
+  }
+
+  // Fallback to direct Gemini call
+  try {
+    const fallbackResult = await callGeminiDirect(transcript, currentSections);
+    return normalizeResult(fallbackResult, transcript);
   } catch (error) {
-    console.error("Gemini Error:", error);
+    console.error('Gemini Error:', error);
     return {
       success: false,
       sectionId: null,

@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import InspectionApp from '@/frontend/src/pages/InspectionApp';
-import { SchedulingPage } from '@/frontend/src/pages/SchedulingPage';
-import { SettingsPage } from '@/frontend/src/pages/SettingsPage';
+
+const InspectionApp = lazy(() => import('@/frontend/src/pages/InspectionApp'));
+const SchedulingPage = lazy(() => import('@/frontend/src/pages/SchedulingPage').then(module => ({ default: module.SchedulingPage })));
+const SettingsPage = lazy(() => import('@/frontend/src/pages/SettingsPage').then(module => ({ default: module.SettingsPage })));
 
 const NavLink = ({ to, icon, label }: { to: string, icon: string, label: string }) => {
     const location = useLocation();
@@ -42,12 +43,14 @@ export default function App() {
     return (
         <Router>
             <Layout>
-                <Routes>
-                    <Route path="/" element={<InspectionApp />} />
-                    <Route path="/scheduling" element={<SchedulingPage />} />
-                    <Route path="/history" element={<div className="p-10 text-center text-slate-500">History Coming Soon</div>} />
-                    <Route path="/settings" element={<SettingsPage />} />
-                </Routes>
+                <Suspense fallback={<div className="w-full h-full flex items-center justify-center text-slate-400">Loading interface…</div>}>
+                    <Routes>
+                        <Route path="/" element={<InspectionApp />} />
+                        <Route path="/scheduling" element={<SchedulingPage />} />
+                        <Route path="/history" element={<div className="p-10 text-center text-slate-500">History Coming Soon</div>} />
+                        <Route path="/settings" element={<SettingsPage />} />
+                    </Routes>
+                </Suspense>
             </Layout>
         </Router>
     );

@@ -87,6 +87,98 @@ router.post('/analyze', async (req, res) => {
   }
 });
 
+// Voice-command style inspection update (mirrors frontend HQS logic)
+router.post('/voice-command', async (req, res) => {
+  try {
+    const { transcript, sections } = req.body;
+
+    if (!transcript || !Array.isArray(sections)) {
+      return res.status(400).json({ error: 'Transcript and sections are required' });
+    }
+
+    const trimmedSections = sections.map(section => ({
+      id: section.id,
+      title: section.title,
+      items: section.items?.map(item => ({
+        id: item.id,
+        label: item.label,
+        status: item.status
+      })) || []
+    }));
+
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const prompt = `
+      You are an HQS (Housing Quality Standards) Inspection assistant.
+      The user is speaking an observation or providing a note.
+
+      Current Form Structure & Status:
+      ${JSON.stringify(trimmedSections).substring(0, 15000)}
+
+      User Input: "${transcript}"
+
+      Your Tasks:
+      1. Identify the most relevant Section ID and Item ID.
+      2. Determine the status: PASS, FAIL, INCONCLUSIVE, or N/A.
+      3. Summarize the input into professional HQS short-form language (<= 220 characters).
+      4. Determine if this is a 24-Hour Fail using HUD guidance.
+      5. Determine Responsibility (owner vs tenant) when mentioned; default owner.
+
+      Return JSON only with:
+      {
+        "sectionId": "string|null",
+        "itemId": "string|null",
+        "status": "PASS|FAIL|INCONCLUSIVE|N/A",
+        "comment": "string",
+        "is24Hour": true|false,
+        "responsibility": "owner|tenant"
+      }
+    `;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    let parsed;
+    try {
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+    } catch (err) {
+      logger.warn('Failed to parse voice command response:', err);
+    }
+
+    const normalized = {
+      sectionId: parsed?.sectionId ?? null,
+      itemId: parsed?.itemId ?? null,
+      status: parsed?.status?.toUpperCase() || 'INCONCLUSIVE',
+      comment: parsed?.comment || transcript,
+      is24Hour: Boolean(parsed?.is24Hour),
+      responsibility: parsed?.responsibility === 'tenant' ? 'tenant' : 'owner',
+      success: true
+    };
+
+    if (req.user?.id) {
+      await db('audit_trails').insert({
+        user_id: req.user.id,
+        agency_id: req.agencyId,
+        action: 'voice_command',
+        entity_type: 'inspection_voice_note',
+        changes: {
+          transcript,
+          result: normalized
+        }
+      });
+    }
+
+    res.json(normalized);
+  } catch (error) {
+    logger.error('Voice command analysis error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Voice command analysis failed'
+    });
+  }
+});
+
 // Generate inspection comment from voice
 router.post('/transcribe', async (req, res) => {
   try {

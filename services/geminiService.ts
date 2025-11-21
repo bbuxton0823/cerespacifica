@@ -1,13 +1,28 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
-import { InspectionData, InspectionStatus } from '../types';
+import { InspectionStatus } from '../types';
 
-const getAi = () => {
+type GenAiModule = typeof import('@google/genai');
+type GoogleGenAIClient = InstanceType<GenAiModule['GoogleGenAI']>;
+
+let genAiModulePromise: Promise<GenAiModule> | null = null;
+const loadGenAiModule = () => {
+  if (!genAiModulePromise) {
+    genAiModulePromise = import('@google/genai');
+  }
+  return genAiModulePromise;
+};
+
+let cachedAiClient: GoogleGenAIClient | null = null;
+
+const getAi = async () => {
   if (!process.env.API_KEY) {
     console.error("API Key missing");
     return null;
   }
-  return new GoogleGenAI({ apiKey: process.env.API_KEY });
+  if (cachedAiClient) return cachedAiClient;
+  const { GoogleGenAI } = await loadGenAiModule();
+  cachedAiClient = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  return cachedAiClient;
 };
 
 export const processVoiceCommand = async (
@@ -22,7 +37,7 @@ export const processVoiceCommand = async (
   responsibility: 'owner' | 'tenant' | null;
   success: boolean;
 }> => {
-  const ai = getAi();
+  const ai = await getAi();
   if (!ai) return { success: false, sectionId: null, itemId: null, status: null, comment: null, is24Hour: false, responsibility: 'owner' };
 
   // Map sections including item status for context awareness (crucial for 24h fail logic)
@@ -62,10 +77,11 @@ export const processVoiceCommand = async (
          - No working CO Detector (Check context: If OTHER CO detectors are PASS, this is NOT 24-hour).
     5. **Determine Responsibility:** If the user mentions "tenant damage", "tenant's fault", or similar, set responsibility to 'tenant'. Otherwise, default to 'owner'.
     
-    Return JSON only.
-  `;
+      Return JSON only.
+    `;
 
   try {
+    const { Type } = await loadGenAiModule();
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: prompt,

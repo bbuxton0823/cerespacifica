@@ -3,8 +3,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { INITIAL_SECTIONS, ROOM_TEMPLATES } from '@/constants';
 import { InspectionStatus, RoomSection, UnitDetails, InspectionItem, RoomLocation } from '@/types';
 import { processVoiceCommand } from '@/services/geminiService';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 // --- TYPES FOR SPEECH API ---
 declare global {
@@ -51,6 +49,22 @@ const RestartIcon = () => <i className="fas fa-redo"></i>;
 const HelpIcon = () => <i className="fas fa-question-circle"></i>;
 const ArrowRightIcon = () => <i className="fas fa-arrow-right"></i>;
 const ArrowLeftIcon = () => <i className="fas fa-arrow-left"></i>;
+
+let jsPdfFactory: Promise<typeof import('jspdf').default> | null = null;
+const loadJsPdf = () => {
+  if (!jsPdfFactory) {
+    jsPdfFactory = import('jspdf').then(mod => mod.default);
+  }
+  return jsPdfFactory;
+};
+
+let autoTableFactory: Promise<typeof import('jspdf-autotable').default> | null = null;
+const loadAutoTable = () => {
+  if (!autoTableFactory) {
+    autoTableFactory = import('jspdf-autotable').then(mod => mod.default);
+  }
+  return autoTableFactory;
+};
 
 // --- COMPONENTS ---
 
@@ -946,10 +960,11 @@ export default function App() {
     }
   };
 
-  // --- OFFICIAL HUD FORM REPLICA GENERATOR ---
-  const generateOfficialHUDForm = () => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.width;
+    // --- OFFICIAL HUD FORM REPLICA GENERATOR ---
+    const generateOfficialHUDForm = async () => {
+      const [jsPDF, autoTable] = await Promise.all([loadJsPdf(), loadAutoTable()]);
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
 
     // Combine full address
     const fullAddress = `${details.address}, ${details.city}, ${details.state} ${details.zipCode}`;
@@ -1140,12 +1155,13 @@ export default function App() {
       doc.text("Date: " + details.inspectionDate, 180, 60);
     }
 
-    doc.save(`HUD-52580-${details.tenantName || 'Inspection'}.pdf`);
-  };
+      doc.save(`HUD-52580-${details.tenantName || 'Inspection'}.pdf`);
+    };
 
-  const generatePDF = () => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.width;
+    const generatePDF = async () => {
+      const jsPDF = await loadJsPdf();
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
 
     // Combine full address
     const fullAddress = `${details.address}, ${details.city}, ${details.state} ${details.zipCode}`;
@@ -1301,8 +1317,9 @@ export default function App() {
       doc.addImage(secondSignature, 'PNG', 110, sigY + 5, 60, 30);
     }
 
-    doc.save(`HQS_Report_${details.tenantName.replace(/\s/g, '_')}.pdf`);
-  };
+      const safeTenantName = details.tenantName?.trim() ? details.tenantName.trim().replace(/\s/g, '_') : 'Inspection';
+      doc.save(`HQS_Report_${safeTenantName}.pdf`);
+    };
 
   // --- RENDER ---
 

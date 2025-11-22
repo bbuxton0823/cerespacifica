@@ -3,14 +3,11 @@ dotenv.config();
 
 export default {
     development: {
-        client: 'pg',
+        client: 'sqlite3',
         connection: {
-            host: process.env.DB_HOST || 'localhost',
-            port: process.env.DB_PORT || 5432,
-            user: process.env.DB_USER || 'postgres',
-            password: process.env.DB_PASSWORD || 'postgres',
-            database: process.env.DB_NAME || 'hqs_app'
+            filename: './dev.sqlite3'
         },
+        useNullAsDefault: true,
         migrations: {
             directory: './migrations',
             tableName: 'knex_migrations'

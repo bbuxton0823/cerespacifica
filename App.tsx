@@ -44,6 +44,7 @@ export default function App() {
             <Layout>
                 <Routes>
                     <Route path="/" element={<InspectionApp />} />
+                    <Route path="/inspection/:id" element={<InspectionApp />} />
                     <Route path="/scheduling" element={<SchedulingPage />} />
                     <Route path="/history" element={<div className="p-10 text-center text-slate-500">History Coming Soon</div>} />
                     <Route path="/settings" element={<SettingsPage />} />

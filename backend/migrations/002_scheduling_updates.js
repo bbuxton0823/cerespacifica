@@ -13,7 +13,7 @@ export const up = async (knex) => {
 
     // Create notifications table
     await knex.schema.createTable('notifications', (table) => {
-        table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
+        table.uuid('id').primary();
         table.uuid('inspection_id').references('id').inTable('inspections').onDelete('CASCADE');
         table.enum('type', ['Schedule_Notice', 'Failure_Notice', 'Reminder']).notNullable();
         table.string('recipient').notNullable(); // 'Tenant', 'Owner', 'Both'

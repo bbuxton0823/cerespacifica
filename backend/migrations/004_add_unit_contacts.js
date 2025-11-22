@@ -4,7 +4,6 @@
  */
 export async function up(knex) {
     await knex.schema.alterTable('units', (table) => {
-        table.string('tenant_name');
         table.string('tenant_phone');
         table.string('landlord_name');
         table.string('landlord_address');

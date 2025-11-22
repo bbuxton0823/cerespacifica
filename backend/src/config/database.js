@@ -6,7 +6,7 @@ dotenv.config();
 
 const db = knex({
   client: 'pg',
-  connection: {
+  connection: process.env.DATABASE_URL || {
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 5432,
     user: process.env.DB_USER || 'postgres',
@@ -28,11 +28,11 @@ export async function initDatabase() {
     // Test connection
     await db.raw('SELECT 1');
     logger.info('Database connection established');
-    
+
     // Run migrations
     await db.migrate.latest();
     logger.info('Database migrations completed');
-    
+
     return db;
   } catch (error) {
     logger.error('Database initialization failed:', error);

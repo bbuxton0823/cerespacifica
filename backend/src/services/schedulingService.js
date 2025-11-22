@@ -1,6 +1,7 @@
 import db from '../config/database.js';
 import { logger } from '../utils/logger.js';
 import { addDays, addYears, format } from 'date-fns';
+import { v4 as uuidv4 } from 'uuid';
 
 export class SchedulingService {
     /**
@@ -139,7 +140,7 @@ export class SchedulingService {
     /**
      * Process inspection result and update unit compliance
      */
-    async processInspectionResult(inspectionId, passed, deficiencies = []) {
+    async processInspectionResult(inspectionId, result, deficiencies = []) {
         const trx = await db.transaction();
         try {
             const inspection = await trx('inspections').where({ id: inspectionId }).first();
@@ -147,7 +148,31 @@ export class SchedulingService {
 
             const now = new Date();
 
-            if (passed) {
+            if (result === 'No Entry') {
+                // Update inspection status
+                await trx('inspections')
+                    .where({ id: inspectionId })
+                    .update({
+                        status: 'No Entry',
+                        result: 'No Entry',
+                        completed_at: now
+                    });
+
+                // Schedule re-inspection (e.g., in 14 days)
+                const deadline = addDays(now, 14);
+                await trx('inspections').insert({
+                    id: uuidv4(), // Ensure uuid is imported if not already
+                    unit_id: inspection.unit_id,
+                    agency_id: inspection.agency_id,
+                    type: inspection.type, // Keep same type
+                    status: 'Scheduled',
+                    scheduled_date: deadline,
+                    created_at: now,
+                    updated_at: now
+                });
+
+                logger.info(`Processed No Entry for ${inspectionId}. Rescheduled for ${deadline}`);
+            } else if (result === 'Pass') {
                 // Update unit to compliant
                 await trx('units')
                     .where({ id: inspection.unit_id })

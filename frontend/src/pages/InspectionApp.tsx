@@ -606,6 +606,7 @@ export default function App() {
   const [secondSignerRole, setSecondSignerRole] = useState<'Tenant' | 'Owner' | 'Owner Representative'>('Tenant');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showTutorial, setShowTutorial] = useState(true);
+  const [isNoEntry, setIsNoEntry] = useState(false);
 
   // Camera ref - Defined once at top level
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -744,6 +745,16 @@ export default function App() {
     setSections(combinedSections);
     setStep('inspection');
     window.scrollTo(0, 0);
+  };
+
+  const submitNoEntry = async () => {
+    if (confirm("Are you sure you want to mark this inspection as 'No Entry'? This will reschedule the inspection.")) {
+      // In a real app, this would call the API
+      alert("Submitting 'No Entry' status to backend...");
+      // Simulate API call
+      // await fetch(`/api/inspections/${inspectionId}/sync`, { method: 'POST', body: JSON.stringify({ result: 'No Entry' }) });
+      setStep('summary'); // Or reset
+    }
   };
 
   // --- ADD ROOM DYNAMICALLY ---
@@ -1514,11 +1525,24 @@ export default function App() {
               )}
             </div>
 
+            <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg mb-4">
+              <input
+                type="checkbox"
+                id="noEntry"
+                checked={isNoEntry}
+                onChange={(e) => setIsNoEntry(e.target.checked)}
+                className="w-5 h-5 text-red-600 rounded focus:ring-red-500"
+              />
+              <label htmlFor="noEntry" className="text-red-800 font-bold text-sm">
+                No Entry / No Show
+              </label>
+            </div>
+
             <button
-              onClick={startInspection}
-              className="w-full py-4 bg-green-600 hover:bg-green-500 rounded-xl font-bold text-lg shadow-lg transition-all transform hover:scale-[1.02]"
+              onClick={isNoEntry ? submitNoEntry : startInspection}
+              className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg transition-all transform hover:scale-[1.02] ${isNoEntry ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-green-600 hover:bg-green-500 text-white'}`}
             >
-              Start Inspection
+              {isNoEntry ? 'Submit No Entry' : 'Start Inspection'}
             </button>
 
             {/* Integration Tools */}

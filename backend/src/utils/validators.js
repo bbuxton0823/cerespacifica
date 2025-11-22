@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { EMERGENCY_FAIL_ITEMS } from '../../frontend/src/constants/hud52580.js';
+import { EMERGENCY_FAIL_ITEMS } from '../constants/hud52580.js';
 
 // HUD 52580 Inspection Data Validator
 const inspectionItemSchema = Joi.object({
@@ -17,7 +17,7 @@ const roomSectionSchema = Joi.object({
   id: Joi.string().required(),
   title: Joi.string().required(),
   type: Joi.string().valid(
-    'living_room', 'kitchen', 'bathroom', 'bedroom', 
+    'living_room', 'kitchen', 'bathroom', 'bedroom',
     'secondary', 'exterior', 'heating', 'general'
   ).required(),
   location: Joi.object({
@@ -38,7 +38,7 @@ const unitDetailsSchema = Joi.object({
   state: Joi.string().length(2).required(),
   zipCode: Joi.string().pattern(/^\d{5}(-\d{4})?$/).required(),
   unitType: Joi.string().valid(
-    'S/F Detached', 'Duplex/Triplex', 'Town House', 
+    'S/F Detached', 'Duplex/Triplex', 'Town House',
     'Apartment', 'Manufactured', 'SRO', 'Shared Housing', 'Other'
   ).required(),
   yearBuilt: Joi.number().min(1800).max(new Date().getFullYear()),
@@ -57,9 +57,9 @@ const inspectionDataSchema = Joi.object({
 // Main validation function
 export async function validateInspectionData(data) {
   try {
-    const { error, value } = inspectionDataSchema.validate(data, { 
+    const { error, value } = inspectionDataSchema.validate(data, {
       abortEarly: false,
-      stripUnknown: true 
+      stripUnknown: true
     });
 
     if (error) {
@@ -75,7 +75,7 @@ export async function validateInspectionData(data) {
     // Check mandatory sections are present
     const mandatorySections = ['living_room', 'kitchen', 'bathroom_1', 'health_safety'];
     const sectionIds = value.sections.map(s => s.id);
-    
+
     for (const mandatory of mandatorySections) {
       if (!sectionIds.includes(mandatory)) {
         complianceErrors.push(`Missing mandatory section: ${mandatory}`);
@@ -103,9 +103,9 @@ export async function validateInspectionData(data) {
 
     // Check lead paint compliance for pre-1978 units
     if (value.details.yearBuilt < 1978) {
-      const leadPaintChecked = value.sections.some(section => 
-        section.items.some(item => 
-          item.label.toLowerCase().includes('lead') && 
+      const leadPaintChecked = value.sections.some(section =>
+        section.items.some(item =>
+          item.label.toLowerCase().includes('lead') &&
           item.status !== 'PENDING'
         )
       );

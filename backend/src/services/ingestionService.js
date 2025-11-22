@@ -62,6 +62,38 @@ export class IngestionService {
                             updated_at: new Date()
                         }).returning('*');
                         unit = newUnit;
+
+                        // Create or update inspection
+                        // Note: The original instruction used 'nextDate' which was not defined.
+                        // For new units, we'll use the explicit date from the row if available,
+                        // otherwise, the compliance logic below will determine it.
+                        const scheduledDateFromRow = row['Date'] || row['Inspection Date'];
+                        let initialScheduledDate = null;
+                        if (scheduledDateFromRow) {
+                            if (typeof scheduledDateFromRow === 'number') {
+                                initialScheduledDate = new Date((scheduledDateFromRow - (25567 + 2)) * 86400 * 1000);
+                            } else {
+                                initialScheduledDate = new Date(scheduledDateFromRow);
+                            }
+                        }
+
+                        if (initialScheduledDate) {
+                            const timeWindow = row['Time'] || row['Time Window'] || '9:00 AM - 3:00 PM';
+                            const type = row['Type of Inspection'] || row['Inspection Type'] || 'Annual';
+
+                            await trx('inspections').insert({
+                                id: uuidv4(),
+                                unit_id: unit.id, // Use the newly created unit's ID
+                                agency_id: agencyId,
+                                inspector_id: null, // To be assigned
+                                scheduled_date: initialScheduledDate,
+                                time_window: timeWindow,
+                                type: type,
+                                status: 'Scheduled',
+                                created_at: new Date(),
+                                updated_at: new Date()
+                            });
+                        }
                     } else {
                         // Update Unit Info
                         await trx('units')
@@ -114,9 +146,10 @@ export class IngestionService {
                                 id: uuidv4(),
                                 unit_id: unit.id,
                                 agency_id: agencyId,
-                                type: row['Type'] || 'Annual',
+                                type: row['Type'] || row['Type of Inspection'] || 'Annual',
                                 status: 'Scheduled',
                                 scheduled_date: inspectionDate,
+                                time_window: row['Time'] || row['Time Window'] || '9:00 AM - 3:00 PM',
                                 created_at: new Date(),
                                 updated_at: new Date()
                             });

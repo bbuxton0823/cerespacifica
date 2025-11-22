@@ -1,5 +1,6 @@
 import express from 'express';
 import { mailingService } from '../services/mailingService.js';
+import { letterService } from '../services/letterService.js';
 import { requirePrivilege, requireAgencyAccess } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
 
@@ -45,6 +46,25 @@ router.post('/generate', requirePrivilege('create_inspection'), requireAgencyAcc
     } catch (error) {
         logger.error('Error generating notice:', error);
         res.status(500).json({ error: 'Failed to generate notice' });
+    }
+});
+
+// Generate Word Letter
+router.post('/letter', requirePrivilege('read_inspection'), async (req, res) => {
+    try {
+        const { inspectionId, type } = req.body;
+        if (!inspectionId || !type) {
+            return res.status(400).json({ error: 'Missing inspectionId or type' });
+        }
+
+        const buffer = await letterService.generateLetterForInspection(inspectionId, type);
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        res.setHeader('Content-Disposition', `attachment; filename=letter_${type}_${inspectionId}.docx`);
+        res.send(buffer);
+    } catch (error) {
+        logger.error('Error generating letter:', error);
+        res.status(500).json({ error: 'Failed to generate letter' });
     }
 });
 

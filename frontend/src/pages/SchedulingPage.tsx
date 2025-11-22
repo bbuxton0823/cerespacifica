@@ -116,13 +116,29 @@ export const SchedulingPage: React.FC = () => {
                         <i className="fas fa-route"></i>
                         Auto-Route
                     </button>
-                    <button
-                        onClick={() => alert("Generating Letters for Tenant and Landlord... (Mock)")}
-                        className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm transition-all flex items-center gap-2"
-                    >
-                        <i className="fas fa-envelope-open-text"></i>
-                        Letters
-                    </button>
+                    <div className="relative group">
+                        <button
+                            className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm transition-all flex items-center gap-2"
+                        >
+                            <i className="fas fa-envelope-open-text"></i>
+                            Letters
+                            <i className="fas fa-chevron-down text-xs ml-1"></i>
+                        </button>
+                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-100 hidden group-hover:block z-50">
+                            <button
+                                onClick={() => alert("Downloading Standard Appointment Letter (.docx)...")}
+                                className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 first:rounded-t-lg"
+                            >
+                                Standard Appointment
+                            </button>
+                            <button
+                                onClick={() => alert("Downloading Final Notice (.docx)...")}
+                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 last:rounded-b-lg"
+                            >
+                                Final Notice
+                            </button>
+                        </div>
+                    </div>
                     <button
                         onClick={() => alert("Downloading Batch Export (CSV)... (Mock)")}
                         className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm transition-all flex items-center gap-2"

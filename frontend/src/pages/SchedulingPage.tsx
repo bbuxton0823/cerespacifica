@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar } from '../components/Calendar';
+import { API_BASE_URL } from '../config';
 import { addDays, format } from 'date-fns';
 
 // Mock data type
@@ -42,7 +43,7 @@ export const SchedulingPage: React.FC = () => {
         formData.append('agencyId', 'san_mateo_ha');
 
         try {
-            const response = await fetch('/api/ingestion/schedule', {
+            const response = await fetch(`${API_BASE_URL}/api/ingestion/schedule`, {
                 method: 'POST',
                 body: formData,
             });
@@ -68,7 +69,7 @@ export const SchedulingPage: React.FC = () => {
         if (!confirm("Auto-route all unassigned scheduled inspections?")) return;
 
         try {
-            const response = await fetch('/api/inspections/auto-route', {
+            const response = await fetch(`${API_BASE_URL}/api/inspections/auto-route`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -92,12 +93,12 @@ export const SchedulingPage: React.FC = () => {
     };
 
     const handleExport = () => {
-        window.open('/api/inspections/batch/export', '_blank');
+        window.open(`${API_BASE_URL}/api/inspections/batch/export`, '_blank');
     };
 
     const fetchInspections = async () => {
         try {
-            const response = await fetch('/api/inspections');
+            const response = await fetch(`${API_BASE_URL}/api/inspections`);
             if (response.ok) {
                 const data = await response.json();
                 // Map API data to Calendar events

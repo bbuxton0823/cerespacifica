@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Calendar } from '../components/Calendar';
 import { addDays, format } from 'date-fns';
 
@@ -23,27 +23,75 @@ export const SchedulingPage: React.FC = () => {
         time: '10:00'
     });
 
-    const handleImport = () => {
-        setIsImporting(true);
-        setTimeout(() => {
-            setIsImporting(false);
-            alert("Schedule Imported Successfully! (Mock)");
-            // Add mock imported events
-            setEvents(prev => [
-                ...prev,
-                { id: '4', title: 'Unit 505 - Annual', date: addDays(new Date(), 1), type: 'Annual' },
-                { id: '5', title: 'Unit 606 - Annual', date: addDays(new Date(), 1), type: 'Annual' }
-            ]);
-        }, 1500);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
     };
 
-    const handleAutoRoute = () => {
-        alert("Auto-Routing based on ZIP Code and Date... (Mock)");
-        // Mock color assignment
-        setEvents(prev => prev.map((e, i) => ({
-            ...e,
-            color: i % 2 === 0 ? '#3b82f6' : '#ef4444' // Blue or Red
-        })));
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setIsImporting(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        // Default agency ID for now, in real app this comes from auth context
+        formData.append('agencyId', 'san_mateo_ha');
+
+        try {
+            const response = await fetch('/api/ingestion/schedule', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                alert(`Successfully imported ${result.success} records!`);
+                // Refresh events (in a real app, you'd re-fetch from API)
+                // window.location.reload(); 
+            } else {
+                const error = await response.json();
+                alert(`Import failed: ${error.error || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert('Failed to upload file.');
+        } finally {
+            setIsImporting(false);
+            if (fileInputRef.current) fileInputRef.current.value = ''; // Reset input
+        }
+    };
+
+    const handleAutoRoute = async () => {
+        if (!confirm("Auto-route all unassigned scheduled inspections?")) return;
+
+        try {
+            const response = await fetch('/api/inspections/auto-route', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    agencyId: 'san_mateo_ha',
+                    startDate: new Date().toISOString(),
+                    endDate: addDays(new Date(), 30).toISOString()
+                })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                alert(result.message);
+                // Refresh events
+            } else {
+                alert("Auto-routing failed.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error auto-routing.");
+        }
+    };
+
+    const handleExport = () => {
+        window.open('/api/inspections/batch/export', '_blank');
     };
 
     // Mock fetching data
@@ -101,8 +149,15 @@ export const SchedulingPage: React.FC = () => {
                     <p className="text-sm text-slate-500">Manage inspection appointments and compliance deadlines</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileUpload}
+                        accept=".csv,.xlsx,.xls"
+                        className="hidden"
+                    />
                     <button
-                        onClick={handleImport}
+                        onClick={handleImportClick}
                         disabled={isImporting}
                         className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm transition-all flex items-center gap-2"
                     >
@@ -140,7 +195,7 @@ export const SchedulingPage: React.FC = () => {
                         </div>
                     </div>
                     <button
-                        onClick={() => alert("Downloading Batch Export (CSV)... (Mock)")}
+                        onClick={handleExport}
                         className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm transition-all flex items-center gap-2"
                     >
                         <i className="fas fa-file-csv"></i>

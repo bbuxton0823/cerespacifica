@@ -8,7 +8,7 @@ export async function up(knex) {
 
     if (!exists) {
         await knex('agencies').insert({
-            id: 'san_mateo_ha', // Fixed ID for testing
+            id: '11111111-1111-1111-1111-111111111111', // Fixed ID for testing
             name: 'Housing Authority of the County of San Mateo',
             address: '264 Harbor Blvd., Building A',
             city: 'Belmont',
@@ -32,5 +32,5 @@ export async function up(knex) {
  * @returns { Promise<void> }
  */
 export async function down(knex) {
-    await knex('agencies').where({ id: 'san_mateo_ha' }).del();
+    await knex('agencies').where({ id: '11111111-1111-1111-1111-111111111111' }).del();
 }

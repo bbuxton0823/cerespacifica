@@ -24,6 +24,7 @@ export class LetterService {
                 'units.zip_code',
                 'units.tenant_name',
                 'units.landlord_name',
+                'units.landlord_address',
                 'units.t_code',
                 'agencies.name as agency_name',
                 'agencies.settings as agency_settings'
@@ -182,10 +183,8 @@ export class LetterService {
             new Paragraph({ text: "Nan McKay & Associates, Inc" }), // Or Agency Name
             new Paragraph({ text: "" }),
             new Paragraph({ text: "" }),
-            new Paragraph({ text: "CC: WOODLAND PARK PROPERTY OWNER LLC" }), // Mock Owner
-            new Paragraph({ text: "c/o WOODLAND PARK APTS" }),
-            new Paragraph({ text: "5 NEWELL CT" }),
-            new Paragraph({ text: "E PALO ALTO, CA 94303" }),
+            new Paragraph({ text: `CC: ${data.landlord_name ? securityService.decrypt(data.landlord_name).toUpperCase() : 'OWNER'}` }),
+            new Paragraph({ text: data.landlord_address ? data.landlord_address.toUpperCase() : '' }),
             // Barcode placeholder
             new Paragraph({
                 children: [new TextRun({ text: "||||||||||||||||||||||||||||||||||||", font: "Code39" })],
@@ -256,10 +255,8 @@ export class LetterService {
             new Paragraph({ text: "bbuxton@smchousing.org" }),
             new Paragraph({ text: "650-508-6769" }),
             new Paragraph({ text: "" }),
-            new Paragraph({ text: "cc: WOODLAND PARK PROPERTY OWNER LLC" }),
-            new Paragraph({ text: "c/o WOODLAND PARK APTS" }),
-            new Paragraph({ text: "5 NEWELL CT" }),
-            new Paragraph({ text: "E PALO ALTO, CA 94303" }),
+            new Paragraph({ text: `cc: ${data.landlord_name ? securityService.decrypt(data.landlord_name).toUpperCase() : 'OWNER'}` }),
+            new Paragraph({ text: data.landlord_address ? data.landlord_address.toUpperCase() : '' }),
         ];
     }
 }

@@ -1,8 +1,13 @@
 import knex from 'knex';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { logger } from '../utils/logger.js';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const db = knex({
   client: 'pg',
@@ -19,7 +24,7 @@ const db = knex({
   },
   migrations: {
     tableName: 'knex_migrations',
-    directory: '../migrations'
+    directory: path.join(__dirname, '../../migrations')
   }
 });
 

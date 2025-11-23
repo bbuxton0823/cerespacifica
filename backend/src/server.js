@@ -30,10 +30,17 @@ const io = new Server(httpServer, {
   }
 });
 
-// Middleware
+// Request logger
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url} - Origin: ${req.headers.origin}`);
+  next();
+});
+
 app.use(helmet());
 app.use(cors({
   origin: (origin, callback) => {
+    console.log('CORS Check:', origin);
+
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
 
@@ -46,6 +53,7 @@ app.use(cors({
     // Allow configured frontend URL
     if (origin === process.env.FRONTEND_URL) return callback(null, true);
 
+    console.log('CORS Blocked:', origin);
     // Reject all others
     callback(new Error('Not allowed by CORS'));
   },

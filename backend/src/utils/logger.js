@@ -20,25 +20,23 @@ const logger = winston.createLogger({
   defaultMeta: { service: 'hqs-app' },
   transports: [
     // Write all logs with level 'error' and below to error.log
-    new winston.transports.File({ 
-      filename: path.join(logDir, 'error.log'), 
-      level: 'error' 
+    new winston.transports.File({
+      filename: path.join(logDir, 'error.log'),
+      level: 'error'
     }),
     // Write all logs with level 'info' and below to combined.log
-    new winston.transports.File({ 
-      filename: path.join(logDir, 'combined.log') 
+    new winston.transports.File({
+      filename: path.join(logDir, 'combined.log')
     })
   ]
 });
 
 // If not in production, log to console as well
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.combine(
-      winston.format.colorize(),
-      winston.format.simple()
-    )
-  }));
-}
+logger.add(new winston.transports.Console({
+  format: winston.format.combine(
+    winston.format.colorize(),
+    winston.format.simple()
+  )
+}));
 
 export { logger };

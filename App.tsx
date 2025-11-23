@@ -4,6 +4,8 @@ import InspectionApp from '@/frontend/src/pages/InspectionApp';
 import { SchedulingPage } from '@/frontend/src/pages/SchedulingPage';
 import { SettingsPage } from '@/frontend/src/pages/SettingsPage';
 
+import { DebugLog } from '@/frontend/src/components/DebugLog';
+
 const NavLink = ({ to, icon, label }: { to: string, icon: string, label: string }) => {
     const location = useLocation();
     const isActive = location.pathname === to;
@@ -34,6 +36,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 <NavLink to="/history" icon="fa-history" label="History" />
                 <NavLink to="/settings" icon="fa-cog" label="Settings" />
             </nav>
+
+            <DebugLog />
         </div>
     );
 };

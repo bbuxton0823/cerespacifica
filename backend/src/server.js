@@ -32,27 +32,12 @@ const io = new Server(httpServer, {
 
 // Middleware
 app.use(cors({
-  origin: (origin, callback) => {
-    console.log('CORS Check:', origin);
-
-    // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
-
-    // Allow localhost for development
-    if (origin.includes('localhost')) return callback(null, true);
-
-    // Allow any Vercel deployment
-    if (origin.includes('vercel.app')) return callback(null, true);
-
-    // Allow configured frontend URL
-    if (origin === process.env.FRONTEND_URL) return callback(null, true);
-
-    console.log('CORS Blocked:', origin);
-    // Reject all others
-    callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true
+  origin: true, // Reflects the request origin, effectively allowing all
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
+app.options('*', cors()); // Enable pre-flight for all routes
 
 // Request logger
 app.use((req, res, next) => {

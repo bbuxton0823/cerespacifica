@@ -70,6 +70,11 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Root route for easy verification
+app.get('/', (req, res) => {
+  res.send('Backend is running!');
+});
+
 // Socket.io handlers
 initSocketHandlers(io);
 

@@ -82,13 +82,25 @@ initSocketHandlers(io);
 app.use(errorHandler);
 
 // Initialize database and start server
+// Initialize database and start server
 const PORT = process.env.PORT || 3000;
 
+console.log('Starting server initialization...');
+
 initDatabase().then(() => {
+  console.log('Database initialized successfully');
   httpServer.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
     logger.info(`Server running on port ${PORT}`);
   });
+
+  httpServer.on('error', (err) => {
+    console.error('Server failed to start:', err);
+    logger.error('Server failed to start:', err);
+    process.exit(1);
+  });
 }).catch(err => {
+  console.error('Failed to initialize database:', err);
   logger.error('Failed to initialize database:', err);
   process.exit(1);
 });

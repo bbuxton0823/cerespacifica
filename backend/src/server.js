@@ -14,6 +14,7 @@ import scheduleRoutes from './routes/schedules.js';
 import reportRoutes from './routes/reports.js';
 import aiRoutes from './routes/ai.js';
 import integrationRoutes from './routes/integrations.js';
+import ingestionRoutes from './routes/ingestion.js';
 import mailingRoutes from './routes/mailing.js';
 import { initDatabase } from './config/database.js';
 import { initSocketHandlers } from './services/socketService.js';
@@ -62,6 +63,7 @@ app.use('/api/inspections', authMiddleware, inspectionRoutes);
 app.use('/api/schedules', authMiddleware, scheduleRoutes);
 app.use('/api/reports', authMiddleware, reportRoutes);
 app.use('/api/ai', authMiddleware, aiRoutes);
+app.use('/api/ingestion', authMiddleware, ingestionRoutes);
 app.use('/api/integrations', authMiddleware, integrationRoutes);
 app.use('/api/mailing', authMiddleware, mailingRoutes);
 

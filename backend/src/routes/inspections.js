@@ -101,6 +101,28 @@ router.get('/:id', requireAgencyAccess, async (req, res) => {
   }
 });
 
+// Auto-route inspections
+router.post('/auto-route', requireAgencyAccess, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.body;
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: 'Start and end dates are required' });
+    }
+
+    const result = await schedulingService.autoRoute(
+      req.agencyId,
+      new Date(startDate),
+      new Date(endDate)
+    );
+
+    res.json(result);
+  } catch (error) {
+    logger.error('Error auto-routing:', error);
+    res.status(500).json({ error: error.message || 'Auto-routing failed' });
+  }
+});
+
 // Create new inspection
 router.post('/', requirePrivilege('create_inspection'), async (req, res) => {
   try {

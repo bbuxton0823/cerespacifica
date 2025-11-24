@@ -25,7 +25,13 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: [
+      process.env.FRONTEND_URL,
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:5173'
+    ].filter(Boolean),
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -33,7 +39,28 @@ const io = new Server(httpServer, {
 
 // Middleware
 app.use(cors({
-  origin: true, // Reflects the request origin, effectively allowing all
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      process.env.FRONTEND_URL,
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:5173'
+    ].filter(Boolean);
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1 && !allowedOrigins.includes('*')) {
+      // For development convenience, you might want to log blocked origins
+      // console.log('Blocked origin:', origin);
+      // return callback(new Error('The CORS policy for this site does not allow access from the specified Origin.'), false);
+      
+      // Or temporarily allow all during dev if needed:
+      return callback(null, true); 
+    }
+    return callback(null, true);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']

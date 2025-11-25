@@ -15,9 +15,9 @@ export class SchedulingService {
         const inspections = await db('inspections')
             .join('units', 'inspections.unit_id', 'units.id')
             .where('inspections.agency_id', agencyId)
-            .where('inspections.status', 'Scheduled')
+            .where('inspections.status', 'pending')
             .whereNull('inspections.inspector_id')
-            .whereBetween('inspections.scheduled_date', [startDate, endDate])
+            .whereBetween('inspections.inspection_date', [startDate, endDate])
             .select('inspections.*', 'units.zip_code');
 
         // 2. Get Inspectors
@@ -28,7 +28,7 @@ export class SchedulingService {
 
         // 3. Group by Date and Zip
         const grouped = inspections.reduce((acc, insp) => {
-            const dateKey = new Date(insp.scheduled_date).toISOString().split('T')[0];
+            const dateKey = new Date(insp.inspection_date).toISOString().split('T')[0];
             if (!acc[dateKey]) acc[dateKey] = {};
 
             const zip = insp.zip_code || 'UNKNOWN';

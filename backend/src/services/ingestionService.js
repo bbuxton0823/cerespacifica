@@ -141,17 +141,17 @@ export class IngestionService {
 
                         if (initialScheduledDate) {
                             const timeWindow = this.getValue(row, ['Window Time', 'Time', 'Time Window']) || '9:00 AM - 3:00 PM';
-                            const type = this.getValue(row, ['Inspection Type', 'Type']) || 'Annual';
+                            const inspType = this.getValue(row, ['Inspection Type', 'Type']) || 'Annual';
 
                             await trx('inspections').insert({
                                 id: uuidv4(),
                                 unit_id: unit.id,
                                 agency_id: agencyId,
                                 inspector_id: null, 
-                                scheduled_date: initialScheduledDate,
-                                time_window: timeWindow,
-                                type: type,
-                                status: 'Scheduled',
+                                inspection_date: initialScheduledDate,
+                                inspection_type: inspType,
+                                status: 'pending',
+                                data: JSON.stringify({ time_window: timeWindow }),
                                 created_at: new Date(),
                                 updated_at: new Date()
                             });
@@ -199,18 +199,19 @@ export class IngestionService {
                     if (inspectionDate) {
                         // Check if already scheduled
                         const existing = await trx('inspections')
-                            .where({ unit_id: unit.id, scheduled_date: inspectionDate })
+                            .where({ unit_id: unit.id, inspection_date: inspectionDate })
                             .first();
 
                         if (!existing) {
+                            const timeWindow = this.getValue(row, ['Time', 'Time Window']) || '9:00 AM - 3:00 PM';
                             await trx('inspections').insert({
                                 id: uuidv4(),
                                 unit_id: unit.id,
                                 agency_id: agencyId,
-                                type: this.getValue(row, ['Type', 'Inspection Type']) || 'Annual',
-                                status: 'Scheduled',
-                                scheduled_date: inspectionDate,
-                                time_window: this.getValue(row, ['Time', 'Time Window']) || '9:00 AM - 3:00 PM',
+                                inspection_type: this.getValue(row, ['Type', 'Inspection Type']) || 'Annual',
+                                status: 'pending',
+                                inspection_date: inspectionDate,
+                                data: JSON.stringify({ time_window: timeWindow }),
                                 created_at: new Date(),
                                 updated_at: new Date()
                             });

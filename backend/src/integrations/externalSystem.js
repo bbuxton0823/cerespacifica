@@ -78,12 +78,12 @@ class ExternalSystemService {
                             agency_id: agencyId,
                             inspector_id: userId, // Assign to uploader initially, or parse from row
                             inspection_type: inspectionData.inspection_type || 'Initial',
-                            status: 'draft',
+                            status: 'pending',
                             t_code: inspectionData.t_code,
                             external_system_id: inspectionData.external_system_id,
                             import_batch_id: batchId,
                             inspection_date: inspectionData.inspection_date || new Date(),
-                            data: {}, // Empty inspection data initially
+                            data: JSON.stringify({ notes: inspectionData.notes || '' }),
                             created_at: new Date(),
                             updated_at: new Date()
                         }).returning('*');

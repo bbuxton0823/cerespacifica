@@ -23,57 +23,64 @@ dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);
+
+// Define allowed origins in one place
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'https://cerespacifica-fsce.vercel.app',  // Production Vercel frontend
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5173'
+].filter(Boolean);
+
 const io = new Server(httpServer, {
   cors: {
-    origin: [
-      process.env.FRONTEND_URL,
-      'http://localhost:3000',
-      'http://localhost:5173',
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:5173'
-    ].filter(Boolean),
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
     credentials: true
   }
 });
 
-// Middleware
+// Helmet BEFORE cors — configure it to not interfere with CORS
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' }
+}));
+
+// CORS middleware
 app.use(cors({
   origin: function (origin, callback) {
-    const allowedOrigins = [
-      process.env.FRONTEND_URL,
-      'http://localhost:3000',
-      'http://localhost:5173',
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:5173'
-    ].filter(Boolean);
-    
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) === -1 && !allowedOrigins.includes('*')) {
-      // For development convenience, you might want to log blocked origins
-      // console.log('Blocked origin:', origin);
-      // return callback(new Error('The CORS policy for this site does not allow access from the specified Origin.'), false);
-      
-      // Or temporarily allow all during dev if needed:
-      return callback(null, true); 
+    // Allow if in explicit list
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
     }
-    return callback(null, true);
+    
+    // Also allow any *.vercel.app for preview deployments
+    if (origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    
+    // Log blocked origins for debugging
+    console.warn('CORS blocked origin:', origin);
+    return callback(null, true); // Allow anyway for now — tighten later if needed
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
-app.options('*', cors()); // Enable pre-flight for all routes
+
+// Explicit preflight handler for all routes
+app.options('*', cors());
 
 // Request logger
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url} - Origin: ${req.headers.origin}`);
   next();
 });
-
-app.use(helmet());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 

@@ -153,8 +153,8 @@ export class SchedulingService {
                 await trx('inspections')
                     .where({ id: inspectionId })
                     .update({
-                        status: 'No Entry',
-                        result: 'No Entry',
+                        status: 'cancelled',
+                        
                         completed_at: now
                     });
 
@@ -164,9 +164,9 @@ export class SchedulingService {
                     id: uuidv4(), // Ensure uuid is imported if not already
                     unit_id: inspection.unit_id,
                     agency_id: inspection.agency_id,
-                    type: inspection.type, // Keep same type
-                    status: 'Scheduled',
-                    scheduled_date: deadline,
+                    inspection_type: inspection.inspection_type, // Keep same type
+                    status: 'pending',
+                    inspection_date: deadline,
                     created_at: now,
                     updated_at: now
                 });
